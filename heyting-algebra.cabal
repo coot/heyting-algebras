@@ -21,6 +21,7 @@ library
   -- other-modules:
   -- other-extensions:
   build-depends:       base
+                     , lattices
                      , QuickCheck >= 2.12.4
   hs-source-dirs:      src
   default-language:    Haskell2010
@@ -32,10 +33,13 @@ test-suite heyting-algebra-test
   hs-source-dirs:      test
   main-is:             Main.hs
   build-depends:       base
+                     , lattices
+                     , hspec
                      , QuickCheck
                      , heyting-algebra
   default-language:    Haskell2010
-  default-extensions:  TypeApplications
+  default-extensions:  FlexibleInstances
+                     , TypeApplications
 
 source-repository head
   type:     git
