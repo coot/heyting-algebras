@@ -1,8 +1,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Data.HeytingAlgebra
   ( HeytingAlgebra (..)
-  , less
-  , greater
+  , lessOrEq
+  , greaterOrEq
 
   -- * Properties
   , prop_HeytingAlgebra
@@ -37,11 +37,11 @@ instance HeytingAlgebra Bool where
   (||) = (Prelude.||)
   not = Prelude.not
 
-less :: (HeytingAlgebra a, Eq a) => a -> a -> Bool
-less a b = (a && b) == a
+lessOrEq :: (HeytingAlgebra a, Eq a) => a -> a -> Bool
+lessOrEq a b = (a && b) == a
 
-greater :: (HeytingAlgebra a, Eq a) => a -> a -> Bool
-greater a b = (a || b) == a
+greaterOrEq :: (HeytingAlgebra a, Eq a) => a -> a -> Bool
+greaterOrEq a b = (a || b) == a
 
 instance HeytingAlgebra () where
   ff = ()
@@ -102,7 +102,7 @@ prop_conj a b c =
   .&&. counterexample "conj idempotent" ((a && a) === a)
   .&&. counterexample "conj identity" ((tt && a) === a)
   .&&. counterexample "conj absorption" ((ff && a) == ff)
-  .&&. counterexample "conj order" ((a && b) `less` a)
+  .&&. counterexample "conj order" ((a && b) `lessOrEq` a)
 
 prop_disj :: forall a. (HeytingAlgebra a, Eq a, Show a) => a -> a -> a -> Property
 prop_disj a b c =
@@ -111,7 +111,7 @@ prop_disj a b c =
   .&&. counterexample "disj idempotent" ((a || a) === a)
   .&&. counterexample "disj identity" ((ff || a) === a)
   .&&. counterexample "disj absoroption" ((tt || a) === tt)
-  .&&. counterexample "disj order" ((a || b) `greater` a)
+  .&&. counterexample "disj order" ((a || b) `greaterOrEq` a)
   where
 
 -- |
@@ -120,10 +120,10 @@ prop_implies :: forall a. (HeytingAlgebra a, Eq a, Show a) => a -> a -> Property
 prop_implies a b =
        counterexample
         (show a ++ " ⇒ " ++ show b ++ " && " ++ show a ++ " NOT ≤ " ++ show b)
-        ((a `implies` b && a) `less` b)
+        ((a `implies` b && a) `lessOrEq` b)
   .&&. counterexample
         (show b ++ " NOT ≤ " ++ show a ++ " ⇒ " ++ show a ++ " && " ++ show b)
-        (b `less` (a `implies` a && b))
+        (b `lessOrEq` (a `implies` a && b))
 
 -- |
 -- Usefull for testing valid instances of `HeytingAlgebra` type class.
