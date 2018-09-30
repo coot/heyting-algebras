@@ -4,7 +4,7 @@ module Data.HeytingAlgebra
   , lessOrEq
   , greaterOrEq
 
-  -- * Properties
+    -- * Properties
   , prop_HeytingAlgebra
   )
   where
@@ -13,6 +13,7 @@ import Prelude hiding (not, (||), (&&))
 import qualified Prelude
 
 import Test.QuickCheck
+
 
 class HeytingAlgebra a where
   ff :: a
@@ -67,13 +68,13 @@ instance (HeytingAlgebra a, HeytingAlgebra b) => HeytingAlgebra (a, b) where
   (a0, b0) || (a1, b1) = (a0 || a1, b0 || b1)
   not (a0, b0) = (not a0, not b0)
 
---     Just tt
+--     tt = Just tt
 --        |
 --     Just a         
 --        |
 --     Just ff
 --        |
---     Nothing
+--     ff = Nothing
 instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Maybe a) where
   ff = Nothing
   tt = Just tt
@@ -112,9 +113,7 @@ prop_disj a b c =
   .&&. counterexample "disj identity" ((ff || a) === a)
   .&&. counterexample "disj absoroption" ((tt || a) === tt)
   .&&. counterexample "disj order" ((a || b) `greaterOrEq` a)
-  where
 
--- |
 -- For all `a`: `_ && a` is left adjoint to  `implies a`
 prop_implies :: forall a. (HeytingAlgebra a, Eq a, Show a) => a -> a -> Property
 prop_implies a b =
