@@ -2,7 +2,7 @@ module Main where
 
 import Test.QuickCheck
 
-import Data.HeytingAlgebra
+import Algebra.Heyting
 
 main :: IO ()
 main = do

@@ -1,11 +1,17 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-module Data.HeytingAlgebra
+module Algebra.Heyting
   ( HeytingAlgebra (..)
   , lessOrEq
   , greaterOrEq
+  , toBool
+  , HBool
+  , hBool
 
     -- * Properties
   , prop_HeytingAlgebra
+  , prop_conj
+  , prop_disj
+  , prop_implies
   )
   where
 
@@ -14,19 +20,21 @@ import qualified Prelude
 
 import Test.QuickCheck
 
+import Algebra.Boolean (BooleanAlgebra)
+import qualified Algebra.Boolean as B
+
 
 class HeytingAlgebra a where
   ff :: a
   tt :: a
 
   implies :: a -> a -> a
-  implies a b = not a || b
 
   (||) :: a -> a -> a
   (&&) :: a -> a -> a
 
-  not :: a -> a
-  not a = a `implies` ff
+not :: HeytingAlgebra a => a -> a
+not a = a `implies` ff
 
 infixr 3 &&
 infixr 2 ||
@@ -34,15 +42,9 @@ infixr 2 ||
 instance HeytingAlgebra Bool where
   ff = False
   tt = True
+  implies = B.implies
   (&&) = (Prelude.&&)
   (||) = (Prelude.||)
-  not = Prelude.not
-
-lessOrEq :: (HeytingAlgebra a, Eq a) => a -> a -> Bool
-lessOrEq a b = (a && b) == a
-
-greaterOrEq :: (HeytingAlgebra a, Eq a) => a -> a -> Bool
-greaterOrEq a b = (a || b) == a
 
 instance HeytingAlgebra () where
   ff = ()
@@ -50,15 +52,13 @@ instance HeytingAlgebra () where
   implies _ _ = ()
   _ && _  = ()
   _ || _  = ()
-  not _   = ()
 
 instance HeytingAlgebra b => HeytingAlgebra (a -> b) where
   ff _ = ff
   tt _ = tt
-  implies f g a = f a `implies` g a
+  implies f g = \a -> f a `implies` g a
   f && g  = \a -> f a && g a
   f || g  = \a -> f a || g a
-  not f a = not (f a)
 
 instance (HeytingAlgebra a, HeytingAlgebra b) => HeytingAlgebra (a, b) where
   ff = (ff, ff)
@@ -66,7 +66,6 @@ instance (HeytingAlgebra a, HeytingAlgebra b) => HeytingAlgebra (a, b) where
   implies (a0, b0) (a1, b1) = (a0 `implies` a1, b0 `implies` b1)
   (a0, b0) && (a1, b1) = (a0 && a1, b0 && b1)
   (a0, b0) || (a1, b1) = (a0 || a1, b0 || b1)
-  not (a0, b0) = (not a0, not b0)
 
 --     tt = Just tt
 --        |
@@ -91,6 +90,37 @@ instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Maybe a) where
   Just a  || Nothing = Just a
   Nothing || Just a  = Just a
   Nothing || Nothing = Nothing
+
+-- |
+-- Every Heyting algebra contains a Boolean algebra. @'toBool'@ maps onto it;
+-- moreover its a monad (Heyting algebra is a category as every poset is) which
+-- preserves finite infima.
+toBool :: HeytingAlgebra a => a -> a
+toBool = not . not
+
+-- |
+-- @'HBool'@ is the left adjoint functor from the category of Heyting algebras
+-- to the category of Boolean algebra; its right adjoint is the inclusion
+-- (every Boolean algebra is a Heyting algebra).
+newtype HBool a = HBool a
+
+hBool :: HeytingAlgebra a => a -> HBool a
+hBool = HBool . toBool
+
+instance HeytingAlgebra a => BooleanAlgebra (HBool a) where
+  ff = HBool ff
+  tt = HBool tt
+
+  HBool a && HBool b = HBool (a && b)
+  HBool a || HBool b = HBool (a || b)
+
+  not (HBool a) = HBool (not a)
+
+lessOrEq :: (HeytingAlgebra a, Eq a) => a -> a -> Bool
+lessOrEq a b = (a && b) == a
+
+greaterOrEq :: (HeytingAlgebra a, Eq a) => a -> a -> Bool
+greaterOrEq a b = (a || b) == a
 
 --
 -- Properties
