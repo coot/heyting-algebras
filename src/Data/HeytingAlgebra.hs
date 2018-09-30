@@ -67,30 +67,6 @@ instance (HeytingAlgebra a, HeytingAlgebra b) => HeytingAlgebra (a, b) where
   (a0, b0) || (a1, b1) = (a0 || a1, b0 || b1)
   not (a0, b0) = (not a0, not b0)
 
--- not valid instance!
--- `Left "" || Right False = Left ""`
--- but it should be `Right False`
-{--
-  - instance (HeytingAlgebra a, Applicative f) => HeytingAlgebra (f a) where
-  -   ff = pure ff
-  -   tt = pure tt
-  -   implies fa fb = implies <$> fa <*> fb
-  -   fa && fb = (&&) <$> fa <*> fb
-  -   fa || fb = (||) <$> fa <*> fb
-  -   not fa = not <$> fa
-  --}
-
-
--- instance (HeytingAlgebra b) => HeytingAlgebra (Either a b) where
-
-data HSum a b
-  = HTop
-  | HLeft a
-  | HRight b
-  | HBottom
--- No! one needs `Left tt || Right tt` and `Left ff && Right ff` (top and bottom)
--- instance (HeytingAlgebra a, HeytingAlgebra b) => HeytingAlgebra (HSum a b) where
-
 --     Just tt
 --        |
 --     Just a         
@@ -149,19 +125,10 @@ prop_implies a b =
         (show b ++ " NOT ≤ " ++ show a ++ " ⇒ " ++ show a ++ " && " ++ show b)
         (b `less` (a `implies` a && b))
 
-prop_complement :: (HeytingAlgebra a, Eq a, Show a) => a -> Property
-prop_complement a =
-  counterexample "complement" (not (not a) `greater` a)
-
-prop_order :: forall a. (HeytingAlgebra a, Eq a, Show a) => a -> a -> Property
-prop_order a b =
-       counterexample "less-greater" ((a `less` b) === (b `greater` a))
-  .&&. counterexample "less-implies" ((a `less` b) === ((a `implies` b) == tt))
-
+-- |
+-- Usefull for testing valid instances of `HeytingAlgebra` type class.
 prop_HeytingAlgebra :: forall a. (HeytingAlgebra a, Eq a, Show a) => a -> a -> a -> Property
 prop_HeytingAlgebra a b c =
        prop_disj a b c
   .&&. prop_conj a b c
   .&&. prop_implies a b
-  .&&. prop_complement a
-  .&&. prop_order a b
