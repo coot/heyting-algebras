@@ -3,7 +3,11 @@ module Algebra.Heyting
   ( HeytingAlgebra (..)
   , iff
   , iff'
-  , hBool
+  , toBoolean
+  , Boolean
+  , runBoolean
+  , boolean
+  , Heyting (..)
 
     -- * Properties
   , prop_HeytingAlgebra
@@ -36,7 +40,7 @@ import Algebra.Boolean ( BooleanAlgebra
                        , prop_BoundedJoinSemiLattice
                        , prop_BoundedMeetSemiLattice
                        )
-import qualified Algebra.Boolean as B
+import qualified Algebra.Boolean as Boolean
 
 
 class BoundedLattice a => HeytingAlgebra a where
@@ -52,7 +56,7 @@ iff' :: (Eq a, HeytingAlgebra a) => a -> a -> Bool
 iff' a b = Meet top `leq` Meet (iff a b)
 
 instance HeytingAlgebra Bool where
-  implies = B.implies
+  implies = Boolean.implies
 
 instance HeytingAlgebra () where
   implies _ _ = ()
@@ -88,14 +92,14 @@ instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Levitated a) where
 -- Every Heyting algebra contains a Boolean algebra. @'toBool'@ maps onto it;
 -- moreover its a monad (Heyting algebra is a category as every poset is) which
 -- preserves finite infima.
-toBool :: HeytingAlgebra a => a -> a
-toBool = not . not
+toBoolean :: HeytingAlgebra a => a -> a
+toBoolean = not . not
 
 -- |
--- @'HBool'@ is the left adjoint functor from the category of Heyting algebras
+-- @'Boolean'@ is the left adjoint functor from the category of Heyting algebras
 -- to the category of Boolean algebra; its right adjoint is the inclusion
--- (every Boolean algebra is a Heyting algebra).
-newtype HBool a = HBool a
+-- represented here by `Heyting` newtype wrapper.
+newtype Boolean a = Boolean { runBoolean :: a }
   deriving ( JoinSemiLattice
            , BoundedJoinSemiLattice
            , MeetSemiLattice
@@ -107,14 +111,31 @@ newtype HBool a = HBool a
            , Show
            )
 
-hBool :: HeytingAlgebra a => a -> HBool a
-hBool = HBool . toBool
+boolean :: HeytingAlgebra a => a -> Boolean a
+boolean = Boolean . toBoolean
 
-instance HeytingAlgebra a => BooleanAlgebra (HBool a) where
-  not (HBool a) = HBool (not a)
+instance HeytingAlgebra a => BooleanAlgebra (Boolean a) where
+  not (Boolean a) = Boolean (not a)
 
-instance (Arbitrary a, HeytingAlgebra a) => Arbitrary (HBool a) where
-  arbitrary = hBool <$> arbitrary
+instance (Arbitrary a, HeytingAlgebra a) => Arbitrary (Boolean a) where
+  arbitrary = boolean <$> arbitrary
+
+-- |
+-- Every Boolean algebra is also a Heyting algebra.
+newtype Heyting a = Heyting { runHeyting :: a }
+  deriving ( JoinSemiLattice
+           , BoundedJoinSemiLattice
+           , MeetSemiLattice
+           , BoundedMeetSemiLattice
+           , Lattice
+           , BoundedLattice
+           , Eq
+           , Ord
+           , Show
+           )
+
+instance BooleanAlgebra a => HeytingAlgebra (Heyting a) where
+  implies (Heyting a) (Heyting b) = Heyting (a `Boolean.implies` b)
 
 --
 -- Properties
