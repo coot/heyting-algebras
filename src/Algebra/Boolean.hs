@@ -1,68 +1,114 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Algebra.Boolean
-  ( BooleanAlgebra (..)
+  ( BooleanAlgebra
   , implies
+  , not
   , iff
   , iff'
+    -- * Adjunction between Boolean and Heyting algebras
+  , Boolean
+  , runBoolean
+  , boolean
 
-    -- Properties
-  , prop_BoundedJoinSemiLattice
-  , prop_BoundedMeetSemiLattice
+    -- * Properties
   , prop_not 
   , prop_BooleanAlgebra
   ) where
 
 import Prelude hiding (not)
-import qualified Prelude
 
+import Control.Applicative   (Const (..))
+import Data.Data             (Data, Typeable)
+import Data.Functor.Identity (Identity (..))
+import Data.Proxy            (Proxy (..))
+import Data.Semigroup        (Endo (..))
+import GHC.Generics          (Generic)
 import Test.QuickCheck
 
-import Algebra.Lattice ( BoundedLattice
+import Algebra.Lattice ( Lattice
+                       , BoundedLattice
+                       , JoinSemiLattice
                        , BoundedJoinSemiLattice
+                       , MeetSemiLattice
                        , BoundedMeetSemiLattice
-                       , Meet (..)
                        , bottom
                        , top
-                       , meetLeq
-                       , joinLeq
                        , (/\)
                        , (\/)
                        )
-import Algebra.PartialOrd (leq)
 
-class BoundedLattice a => BooleanAlgebra a where
-  not :: a -> a
+import Algebra.Heyting ( HeytingAlgebra (..)
+                       , iff
+                       , iff'
+                       , not
+                       , toBoolean
+                       , prop_HeytingAlgebra
+                       )
 
-implies :: BooleanAlgebra a => a -> a -> a
-implies a b = not a \/ b
+-- |
+-- Boolean algebra is a Heyting algebra which negation satisfies the law of
+-- excluded middle, i.e. either of the following:
+--
+-- prop> not . not == not
+--
+-- or
+--
+-- prop> x ∨ not x == top
+--
+-- Another characterisation of Boolean algebras is as
+-- [complemented](https://en.wikipedia.org/wiki/Complemented_lattice)
+-- [distributive lattices](https://ncatlab.org/nlab/show/distributive+lattice)
+-- where the complement satisfies the following three properties:
+--
+-- prop> (not a) ∧ a == bottom and (not a) ∨ a == top -- excluded middle law
+-- prop> not (not a) == a                             -- involution law
+-- prop> a ≤ b ⇒ not b ≤ not a                        -- order-reversing
+class HeytingAlgebra a => BooleanAlgebra a
 
-iff :: BooleanAlgebra a => a -> a -> a
-iff a b = (a `implies` b) /\ (b `implies` a)
+-- |
+-- @'Boolean'@ is the left adjoint functor from the category of Heyting algebras
+-- to the category of Boolean algebras; its right adjoint is the inclusion.
+newtype Boolean a = Boolean
+    { runBoolean :: a -- ^ extract value from @'Boolean'@
+    }
+  deriving
+    ( JoinSemiLattice, BoundedJoinSemiLattice, MeetSemiLattice
+    , BoundedMeetSemiLattice, Lattice, BoundedLattice, HeytingAlgebra
+    , Eq, Ord, Read, Show, Bounded, Typeable, Data, Generic
+    )
 
-iff' :: (Eq a, BooleanAlgebra a) => a -> a -> Bool
-iff' a b = Meet top `leq` Meet (iff a b)
+instance HeytingAlgebra a => BooleanAlgebra (Boolean a)
 
-instance BooleanAlgebra Bool where
-  not = Prelude.not
+-- |
+-- Smart constructro of the @'Boolean'@ type.
+boolean :: HeytingAlgebra a => a -> Boolean a
+boolean = Boolean . toBoolean
 
-instance (BooleanAlgebra a, BooleanAlgebra b) => BooleanAlgebra (a, b) where
-  not (a0, b0) = (not a0, not b0)
+--
+-- Instances
+--
 
-prop_BoundedMeetSemiLattice :: (BoundedMeetSemiLattice a, Eq a, Show a)
-                            => a -> a -> a -> Property
-prop_BoundedMeetSemiLattice a b c =
-       counterexample "meet associativity" ((a /\ (b /\ c)) === ((a /\ b) /\ c))
-  .&&. counterexample "meet commutativity" ((a /\ b) === (b /\ a))
-  .&&. counterexample "meet idempotent" ((a /\ a) === a)
-  .&&. counterexample "meet identity" ((top /\ a) === a)
-  .&&. counterexample "meet order" ((a /\ b) `meetLeq` a)
+instance BooleanAlgebra ()
 
-prop_BoundedJoinSemiLattice :: (BoundedJoinSemiLattice a, Eq a, Show a) => a -> a -> a -> Property
-prop_BoundedJoinSemiLattice a b c =
-       counterexample "join associativity" ((a \/ (b \/ c)) === ((a \/ b) \/ c))
-  .&&. counterexample "join commutativity" ((a \/ b) === (b \/ a))
-  .&&. counterexample "join idempotent" ((a \/ a) === a)
-  .&&. counterexample "join identity" ((bottom \/ a) === a)
-  .&&. counterexample "join order" (a `joinLeq` (a \/ b))
+instance BooleanAlgebra (Proxy a)
+
+instance BooleanAlgebra Bool
+
+instance BooleanAlgebra b => BooleanAlgebra (a -> b)
+
+instance BooleanAlgebra a => BooleanAlgebra (Identity a)
+
+instance BooleanAlgebra a => BooleanAlgebra (Const a b)
+
+instance BooleanAlgebra a => BooleanAlgebra (Endo a)
+
+instance (BooleanAlgebra a, BooleanAlgebra b) => BooleanAlgebra (a, b)
+
+-- 
+-- Properties
+--
 
 prop_not :: (BooleanAlgebra a, Eq a, Show a) => a -> Property
 prop_not a =
@@ -73,6 +119,5 @@ prop_not a =
 prop_BooleanAlgebra :: (BooleanAlgebra a, Eq a, Show a)
                     => a -> a -> a -> Property
 prop_BooleanAlgebra a b c =
-       prop_BoundedJoinSemiLattice a b c
-  .&&. prop_BoundedMeetSemiLattice a b c
+       prop_HeytingAlgebra a b c
   .&&. prop_not a
