@@ -1,6 +1,8 @@
 module Algebra.Boolean
   ( BooleanAlgebra (..)
   , implies
+  , iff
+  , iff'
 
     -- Properties
   , prop_BoundedJoinSemiLattice
@@ -17,18 +19,27 @@ import Test.QuickCheck
 import Algebra.Lattice ( BoundedLattice
                        , BoundedJoinSemiLattice
                        , BoundedMeetSemiLattice
+                       , Meet (..)
                        , bottom
                        , top
                        , meetLeq
                        , joinLeq
-                       , (\/)
                        , (/\)
+                       , (\/)
                        )
+import Algebra.PartialOrd (leq)
+
 class BoundedLattice a => BooleanAlgebra a where
   not :: a -> a
 
 implies :: BooleanAlgebra a => a -> a -> a
 implies a b = not a \/ b
+
+iff :: BooleanAlgebra a => a -> a -> a
+iff a b = (a `implies` b) /\ (b `implies` a)
+
+iff' :: (Eq a, BooleanAlgebra a) => a -> a -> Bool
+iff' a b = Meet top `leq` Meet (iff a b)
 
 instance BooleanAlgebra Bool where
   not = Prelude.not

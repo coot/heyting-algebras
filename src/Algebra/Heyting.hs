@@ -19,6 +19,7 @@ import Algebra.Lattice ( JoinSemiLattice
                        , BoundedMeetSemiLattice
                        , Lattice
                        , BoundedLattice
+                       , Meet (..)
                        , bottom
                        , top
                        , meetLeq
@@ -26,6 +27,7 @@ import Algebra.Lattice ( JoinSemiLattice
                        )
 import Algebra.Lattice.Dropped (Dropped (..))
 import Algebra.Lattice.Lifted (Lifted (..))
+import Algebra.PartialOrd (leq)
 import Test.QuickCheck
 
 import Algebra.Boolean ( BooleanAlgebra
@@ -40,6 +42,12 @@ class BoundedLattice a => HeytingAlgebra a where
 
 not :: HeytingAlgebra a => a -> a
 not a = a `implies` bottom
+
+iff :: HeytingAlgebra a => a -> a -> a
+iff a b = (a `implies` b) /\ (b `implies` a)
+
+iff' :: (Eq a, HeytingAlgebra a) => a -> a -> Bool
+iff' a b = Meet top `leq` Meet (iff a b)
 
 instance HeytingAlgebra Bool where
   implies = B.implies
@@ -102,7 +110,8 @@ instance (Arbitrary a, HeytingAlgebra a) => Arbitrary (HBool a) where
 -- Properties
 --
 
--- For all `a`: `_ && a` is left adjoint to  `implies a`
+-- For all `a`: `_ /\ a` is left adjoint to  `implies a`, i.e.
+-- prop> Boolean (x /\ a `meetLeq` y) `iff'` Boolean (x `meetLeq` (a `implies` b))
 prop_implies :: (HeytingAlgebra a, Eq a, Show a)
              => a -> a -> Property
 prop_implies a b =
