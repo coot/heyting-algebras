@@ -1,13 +1,10 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Algebra.Heyting
   ( HeytingAlgebra (..)
+  , not
   , iff
   , iff'
   , toBoolean
-  , Boolean
-  , runBoolean
-  , boolean
-  , Heyting (..)
 
     -- * Properties
   , prop_HeytingAlgebra
@@ -22,17 +19,16 @@ import Data.Functor.Identity (Identity (..))
 import Data.Proxy            (Proxy (..))
 import Data.Semigroup        (Endo (..))
 
-import Algebra.Lattice ( JoinSemiLattice
-                       , BoundedJoinSemiLattice
-                       , MeetSemiLattice
+import Algebra.Lattice ( BoundedJoinSemiLattice
                        , BoundedMeetSemiLattice
-                       , Lattice
                        , BoundedLattice
                        , Meet (..)
                        , bottom
                        , top
                        , meetLeq
+                       , joinLeq
                        , (/\)
+                       , (\/)
                        )
 import Algebra.Lattice.Dropped (Dropped (..))
 import Algebra.Lattice.Lifted (Lifted (..))
@@ -41,13 +37,17 @@ import qualified Algebra.Lattice.Levitated as L
 import Algebra.PartialOrd (leq, partialOrdEq)
 import Test.QuickCheck
 
-import Algebra.Boolean ( BooleanAlgebra
-                       , prop_BoundedJoinSemiLattice
-                       , prop_BoundedMeetSemiLattice
-                       )
-import qualified Algebra.Boolean as Boolean
-
-
+-- |
+-- Heyting algebra is a bounded semi-lattice with implication which should
+-- satisfy the following law:
+--
+-- prop> x ∧ a ≤ y ⇔ x ≤ (a ⇒ b)
+--
+-- This means `a ⇒ b` is an
+-- [exponential object](https://ncatlab.org/nlab/show/exponential%2Bobject),
+-- which makes any Heyting algebra
+-- a [cartesian
+-- closed category](https://ncatlab.org/nlab/show/cartesian%2Bclosed%2Bcategory).
 class BoundedLattice a => HeytingAlgebra a where
   implies :: a -> a -> a
 
@@ -61,7 +61,7 @@ iff' :: (Eq a, HeytingAlgebra a) => a -> a -> Bool
 iff' a b = Meet top `leq` Meet (iff a b)
 
 instance HeytingAlgebra Bool where
-  implies = Boolean.implies
+  implies a b = not a \/ b
 
 instance HeytingAlgebra () where
   implies _ _ = ()
@@ -106,57 +106,32 @@ instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Levitated a) where
   implies _              L.Bottom       = L.Bottom
 
 -- |
--- Every Heyting algebra contains a Boolean algebra. @'toBool'@ maps onto it;
--- moreover its a monad (Heyting algebra is a category as every poset is) which
+-- Every Heyting algebra contains a Boolean algebra. @'toBoolean'@ maps onto it;
+-- moreover it is a monad (Heyting algebra is a category as every poset is) which
 -- preserves finite infima.
 toBoolean :: HeytingAlgebra a => a -> a
 toBoolean = not . not
 
--- |
--- @'Boolean'@ is the left adjoint functor from the category of Heyting algebras
--- to the category of Boolean algebra; its right adjoint is the inclusion
--- represented here by `Heyting` newtype wrapper.
-newtype Boolean a = Boolean { runBoolean :: a }
-  deriving ( JoinSemiLattice
-           , BoundedJoinSemiLattice
-           , MeetSemiLattice
-           , BoundedMeetSemiLattice
-           , Lattice
-           , BoundedLattice
-           , Eq
-           , Ord
-           , Show
-           )
-
-boolean :: HeytingAlgebra a => a -> Boolean a
-boolean = Boolean . toBoolean
-
-instance HeytingAlgebra a => BooleanAlgebra (Boolean a) where
-  not (Boolean a) = Boolean (not a)
-
-instance (Arbitrary a, HeytingAlgebra a) => Arbitrary (Boolean a) where
-  arbitrary = boolean <$> arbitrary
-
--- |
--- Every Boolean algebra is also a Heyting algebra.
-newtype Heyting a = Heyting { runHeyting :: a }
-  deriving ( JoinSemiLattice
-           , BoundedJoinSemiLattice
-           , MeetSemiLattice
-           , BoundedMeetSemiLattice
-           , Lattice
-           , BoundedLattice
-           , Eq
-           , Ord
-           , Show
-           )
-
-instance BooleanAlgebra a => HeytingAlgebra (Heyting a) where
-  implies (Heyting a) (Heyting b) = Heyting (a `Boolean.implies` b)
-
 --
 -- Properties
 --
+
+prop_BoundedMeetSemiLattice :: (BoundedMeetSemiLattice a, Eq a, Show a)
+                            => a -> a -> a -> Property
+prop_BoundedMeetSemiLattice a b c =
+       counterexample "meet associativity" ((a /\ (b /\ c)) === ((a /\ b) /\ c))
+  .&&. counterexample "meet commutativity" ((a /\ b) === (b /\ a))
+  .&&. counterexample "meet idempotent" ((a /\ a) === a)
+  .&&. counterexample "meet identity" ((top /\ a) === a)
+  .&&. counterexample "meet order" ((a /\ b) `meetLeq` a)
+
+prop_BoundedJoinSemiLattice :: (BoundedJoinSemiLattice a, Eq a, Show a) => a -> a -> a -> Property
+prop_BoundedJoinSemiLattice a b c =
+       counterexample "join associativity" ((a \/ (b \/ c)) === ((a \/ b) \/ c))
+  .&&. counterexample "join commutativity" ((a \/ b) === (b \/ a))
+  .&&. counterexample "join idempotent" ((a \/ a) === a)
+  .&&. counterexample "join identity" ((bottom \/ a) === a)
+  .&&. counterexample "join order" (a `joinLeq` (a \/ b))
 
 -- For all `a`: `_ /\ a` is left adjoint to  `implies a`, i.e.
 -- prop> Boolean (x /\ a `meetLeq` y) `iff'` Boolean (x `meetLeq` (a `implies` b))
