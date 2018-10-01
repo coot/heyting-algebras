@@ -14,6 +14,10 @@ module Algebra.Boolean
 import Prelude hiding (not)
 import qualified Prelude
 
+import Control.Applicative   (Const (..))
+import Data.Functor.Identity (Identity (..))
+import Data.Proxy            (Proxy (..))
+import Data.Semigroup        (Endo (..))
 import Test.QuickCheck
 
 import Algebra.Lattice ( BoundedLattice
@@ -41,8 +45,26 @@ iff a b = (a `implies` b) /\ (b `implies` a)
 iff' :: (Eq a, BooleanAlgebra a) => a -> a -> Bool
 iff' a b = Meet top `leq` Meet (iff a b)
 
+instance BooleanAlgebra () where
+  not _ = ()
+
+instance BooleanAlgebra (Proxy a) where
+  not _ = Proxy
+
 instance BooleanAlgebra Bool where
   not = Prelude.not
+
+instance BooleanAlgebra b => BooleanAlgebra (a -> b) where
+  not f = not . f
+
+instance BooleanAlgebra a => BooleanAlgebra (Identity a) where
+  not (Identity a) = Identity (not a)
+
+instance BooleanAlgebra a => BooleanAlgebra (Const a b) where
+  not (Const a) = Const (not a)
+
+instance BooleanAlgebra a => BooleanAlgebra (Endo a) where
+  not (Endo f) = Endo (not . f)
 
 instance (BooleanAlgebra a, BooleanAlgebra b) => BooleanAlgebra (a, b) where
   not (a0, b0) = (not a0, not b0)

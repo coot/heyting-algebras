@@ -17,6 +17,11 @@ module Algebra.Heyting
 
 import Prelude hiding (not)
 
+import Control.Applicative   (Const (..))
+import Data.Functor.Identity (Identity (..))
+import Data.Proxy            (Proxy (..))
+import Data.Semigroup        (Endo (..))
+
 import Algebra.Lattice ( JoinSemiLattice
                        , BoundedJoinSemiLattice
                        , MeetSemiLattice
@@ -61,8 +66,20 @@ instance HeytingAlgebra Bool where
 instance HeytingAlgebra () where
   implies _ _ = ()
 
+instance HeytingAlgebra (Proxy a) where
+  implies _ _ = Proxy
+
 instance HeytingAlgebra b => HeytingAlgebra (a -> b) where
   implies f g = \a -> f a `implies` g a
+
+instance HeytingAlgebra a => HeytingAlgebra (Identity a) where
+  implies (Identity a) (Identity b) = Identity (a `implies` b)
+
+instance HeytingAlgebra a => HeytingAlgebra (Const a b) where
+  implies (Const a) (Const b) = Const (a `implies` b)
+
+instance HeytingAlgebra a => HeytingAlgebra (Endo a) where
+  implies (Endo f) (Endo g) = Endo (f `implies` g)
 
 instance (HeytingAlgebra a, HeytingAlgebra b) => HeytingAlgebra (a, b) where
   implies (a0, b0) (a1, b1) = (a0 `implies` a1, b0 `implies` b1)
