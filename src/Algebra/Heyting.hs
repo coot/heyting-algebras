@@ -1,8 +1,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Algebra.Heyting
   ( HeytingAlgebra (..)
-  , toBool
-  , HBool
+  , iff
+  , iff'
   , hBool
 
     -- * Properties
