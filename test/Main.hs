@@ -10,6 +10,8 @@ import Algebra.Lattice ( JoinSemiLattice
                        )
 import Algebra.Lattice.Dropped (Dropped (..))
 import Algebra.Lattice.Lifted (Lifted (..))
+import Algebra.Lattice.Levitated (Levitated)
+import qualified Algebra.Lattice.Levitated as L
 import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
 import Test.QuickCheck
@@ -42,6 +44,20 @@ instance Arbitrary a => Arbitrary (HArbitrary Dropped a) where
   shrink (HArbitrary Top)   = []
   shrink (HArbitrary (Drop a)) =
     HArbitrary Top : [ HArbitrary (Drop a') | a' <- shrink a ]
+
+instance Arbitrary a => Arbitrary (HArbitrary Levitated a) where
+  arbitrary = frequency
+    [ (1, return $ HArbitrary L.Top)
+    , (1, return $ HArbitrary L.Bottom)
+    , (2, HArbitrary . L.Levitate <$> arbitrary)
+    ]
+
+  shrink (HArbitrary L.Bottom) = []
+  shrink (HArbitrary (L.Levitate a))
+    = HArbitrary L.Bottom
+    : HArbitrary L.Top
+    : [ HArbitrary (L.Levitate a') | a' <- shrink a ]
+  shrink (HArbitrary L.Top) = []
 
 newtype Composed f g a = Composed (f (g a))
   deriving ( JoinSemiLattice
@@ -108,11 +124,12 @@ main =
   hspec $ do
     prop "BooleanAlgebra Bool" (prop_BooleanAlgebra @Bool)
     prop "BooleanAlgebra (Bool, Bool)" (prop_BooleanAlgebra @(Bool, Bool))
-    prop "BooleanAlgebra HBool (Lifted Bool)" (prop_BooleanAlgebra @(HBool (HArbitrary Lifted Bool)))
+    prop "BooleanAlgebra Boolean (Lifted Bool)" (prop_BooleanAlgebra @(Boolean (HArbitrary Lifted Bool)))
 
     prop "HeytingAlgebra Bool" (prop_HeytingAlgebra @(Bool))
     prop "HeytingAlgebra (Lifted Bool)" (prop_HeytingAlgebra @(HArbitrary Lifted Bool))
-    prop "HeytingAlgebra (Dropped Bool" (prop_HeytingAlgebra @(HArbitrary Dropped Bool))
+    prop "HeytingAlgebra (Dropped Bool)" (prop_HeytingAlgebra @(HArbitrary Dropped Bool))
+    prop "HeytingAlgebra (Levitated Bool)" (prop_HeytingAlgebra @(HArbitrary Levitated Bool))
     prop "HeytingAlgebra (Dropped (Lifted Bool))" (prop_HeytingAlgebra @(Composed Dropped Lifted Bool))
     prop "HeytingAlgebra (Lifted (Dropped Bool))" (prop_HeytingAlgebra @(Composed Lifted Dropped Bool))
     prop "HeytingAlgebra (Lifted (Lifted Bool))" (prop_HeytingAlgebra @(Composed Lifted Lifted Bool))

@@ -27,7 +27,9 @@ import Algebra.Lattice ( JoinSemiLattice
                        )
 import Algebra.Lattice.Dropped (Dropped (..))
 import Algebra.Lattice.Lifted (Lifted (..))
-import Algebra.PartialOrd (leq)
+import Algebra.Lattice.Levitated (Levitated)
+import qualified Algebra.Lattice.Levitated as L
+import Algebra.PartialOrd (leq, partialOrdEq)
 import Test.QuickCheck
 
 import Algebra.Boolean ( BooleanAlgebra
@@ -62,10 +64,8 @@ instance (HeytingAlgebra a, HeytingAlgebra b) => HeytingAlgebra (a, b) where
   implies (a0, b0) (a1, b1) = (a0 `implies` a1, b0 `implies` b1)
 
 instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Dropped a) where
-  implies (Drop a) (Drop b) | a `meetLeq` b && b `meetLeq` a
-                            = Top
-                            | otherwise
-                            = Drop (a `implies` b)
+  implies (Drop a) (Drop b) | Meet a `partialOrdEq` Meet b = Top
+                            | otherwise                    = Drop (a `implies` b)
   implies Top      a        = a
   implies _        Top      = Top
 
@@ -73,6 +73,16 @@ instance HeytingAlgebra a => HeytingAlgebra (Lifted a) where
   implies (Lift a) (Lift b) = Lift (a `implies` b)
   implies Bottom   _        = Lift top
   implies _        Bottom   = Bottom
+
+instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Levitated a) where
+  implies (L.Levitate a) (L.Levitate b) | Meet a `partialOrdEq` Meet b
+                                        = L.Top
+                                        | otherwise
+                                        = L.Levitate (a `implies` b)
+  implies L.Top          a              = a
+  implies _              L.Top          = L.Top
+  implies L.Bottom       _              = L.Top
+  implies _              L.Bottom       = L.Bottom
 
 -- |
 -- Every Heyting algebra contains a Boolean algebra. @'toBool'@ maps onto it;
