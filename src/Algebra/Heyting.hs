@@ -24,6 +24,7 @@ import Algebra.Lattice ( JoinSemiLattice
                        , meetLeq
                        , (/\)
                        )
+import Algebra.Lattice.Dropped (Dropped (..))
 import Algebra.Lattice.Lifted (Lifted (..))
 import Test.QuickCheck
 
@@ -52,9 +53,17 @@ instance HeytingAlgebra b => HeytingAlgebra (a -> b) where
 instance (HeytingAlgebra a, HeytingAlgebra b) => HeytingAlgebra (a, b) where
   implies (a0, b0) (a1, b1) = (a0 `implies` a1, b0 `implies` b1)
 
+instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Dropped a) where
+  implies (Drop a) (Drop b) | a `meetLeq` b && b `meetLeq` a
+                            = Top
+                            | otherwise
+                            = Drop (a `implies` b)
+  implies Top      a        = a
+  implies _        Top      = Top
+
 instance HeytingAlgebra a => HeytingAlgebra (Lifted a) where
   implies (Lift a) (Lift b) = Lift (a `implies` b)
-  implies Bottom  _         = Lift top
+  implies Bottom   _        = Lift top
   implies _        Bottom   = Bottom
 
 -- |
