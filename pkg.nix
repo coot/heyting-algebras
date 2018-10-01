@@ -7,4 +7,5 @@ mkDerivation {
   libraryHaskellDepends = [ base lattices QuickCheck ];
   testHaskellDepends = [ base hspec lattices QuickCheck ];
   license = stdenv.lib.licenses.mpl20;
+  enableSeparateDocOutput = false;
 }
