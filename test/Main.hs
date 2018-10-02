@@ -74,8 +74,10 @@ newtype Composed f g a = Composed (f (g a))
            , HeytingAlgebra
            , Eq
            , Ord
-           , Show
            )
+
+instance Show (f (g a)) => Show (Composed f g a) where
+  show (Composed fga) = show fga
 
 instance Arbitrary a => Arbitrary (Composed Dropped Lifted a) where
   arbitrary = frequency
