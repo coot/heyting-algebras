@@ -26,12 +26,10 @@ import qualified Data.Map as M
 import qualified Data.Map.Merge.Lazy as Merge
 import qualified Data.Set as S
 
-import Algebra.Lattice ( BoundedJoinSemiLattice
-                       , BoundedMeetSemiLattice
+import Algebra.Lattice ( BoundedJoinSemiLattice (..)
+                       , BoundedMeetSemiLattice (..)
                        , BoundedLattice
                        , Meet (..)
-                       , bottom
-                       , top
                        , meetLeq
                        , joinLeq
                        , (/\)

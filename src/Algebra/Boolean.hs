@@ -32,14 +32,12 @@ import Test.QuickCheck hiding ((==>))
 
 import Algebra.Lattice ( Lattice
                        , BoundedLattice
-                       , JoinSemiLattice
+                       , JoinSemiLattice (..)
                        , BoundedJoinSemiLattice
-                       , MeetSemiLattice
+                       , MeetSemiLattice (..)
                        , BoundedMeetSemiLattice
                        , bottom
                        , top
-                       , (/\)
-                       , (\/)
                        )
 
 import Algebra.Heyting ( HeytingAlgebra (..)
