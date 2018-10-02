@@ -1,7 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Algebra.Heyting
   ( HeytingAlgebra (..)
-  , not
   , iff
   , iff'
   , toBoolean
@@ -13,6 +12,7 @@ module Algebra.Heyting
   where
 
 import Prelude hiding (not)
+import qualified Prelude
 
 import Control.Applicative   (Const (..))
 import Data.Functor.Identity (Identity (..))
@@ -35,7 +35,7 @@ import Algebra.Lattice.Lifted (Lifted (..))
 import Algebra.Lattice.Levitated (Levitated)
 import qualified Algebra.Lattice.Levitated as L
 import Algebra.PartialOrd (leq, partialOrdEq)
-import Test.QuickCheck
+import Test.QuickCheck hiding ((==>))
 
 -- |
 -- Heyting algebra is a bounded semi-lattice with implication which should
@@ -49,61 +49,71 @@ import Test.QuickCheck
 -- a [cartesian
 -- closed category](https://ncatlab.org/nlab/show/cartesian%2Bclosed%2Bcategory).
 class BoundedLattice a => HeytingAlgebra a where
-  implies :: a -> a -> a
+  (==>) :: a -> a -> a
+  (==>) a b = not a \/ b
 
-not :: HeytingAlgebra a => a -> a
-not a = a `implies` bottom
+  -- |
+  -- Default implementation is @not a = a '==>' bottom`@; useful for
+  -- optimisation reasons.  Not that if you can provide just @'not'@ the
+  -- default @'==>'@ will make it into @'Algebra.Boolean.BooleanAlgebra'@.
+  not :: a -> a
+  not a = a ==> bottom
+
+-- |
+-- Less than fixity of both @'\/'@ and @'/\'@.
+infixr 4 ==>
 
 iff :: HeytingAlgebra a => a -> a -> a
-iff a b = (a `implies` b) /\ (b `implies` a)
+iff a b = (a ==> b) /\ (b ==> a)
 
 iff' :: (Eq a, HeytingAlgebra a) => a -> a -> Bool
 iff' a b = Meet top `leq` Meet (iff a b)
 
 instance HeytingAlgebra Bool where
-  implies a b = not a \/ b
+  a ==> b = Prelude.not a \/ b
+  not     = Prelude.not
 
 instance HeytingAlgebra () where
-  implies _ _ = ()
+  _ ==> _ = ()
 
 instance HeytingAlgebra (Proxy a) where
-  implies _ _ = Proxy
+  _ ==> _ = Proxy
 
 instance HeytingAlgebra b => HeytingAlgebra (a -> b) where
-  implies f g = \a -> f a `implies` g a
+  f ==> g = \a -> f a ==> g a
 
 instance HeytingAlgebra a => HeytingAlgebra (Identity a) where
-  implies (Identity a) (Identity b) = Identity (a `implies` b)
+  (Identity a) ==> (Identity b) = Identity (a ==> b)
 
 instance HeytingAlgebra a => HeytingAlgebra (Const a b) where
-  implies (Const a) (Const b) = Const (a `implies` b)
+  (Const a) ==> (Const b) = Const (a ==> b)
 
 instance HeytingAlgebra a => HeytingAlgebra (Endo a) where
-  implies (Endo f) (Endo g) = Endo (f `implies` g)
+  (Endo f) ==> (Endo g) = Endo (f ==> g)
 
 instance (HeytingAlgebra a, HeytingAlgebra b) => HeytingAlgebra (a, b) where
-  implies (a0, b0) (a1, b1) = (a0 `implies` a1, b0 `implies` b1)
+  (a0, b0) ==> (a1, b1) = (a0 ==> a1, b0 ==> b1)
 
 instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Dropped a) where
-  implies (Drop a) (Drop b) | Meet a `partialOrdEq` Meet b = Top
-                            | otherwise                    = Drop (a `implies` b)
-  implies Top      a        = a
-  implies _        Top      = Top
+  (Drop a) ==> (Drop b) | Meet a `partialOrdEq` Meet b = Top
+                        | otherwise                    = Drop (a ==> b)
+  Top      ==> a        = a
+  _        ==> Top      = Top
 
 instance HeytingAlgebra a => HeytingAlgebra (Lifted a) where
-  implies (Lift a) (Lift b) = Lift (a `implies` b)
-  implies Bottom   _        = Lift top
-  implies _        Bottom   = Bottom
+  (Lift a) ==> (Lift b) = Lift (a ==> b)
+  Bottom   ==> _        = Lift top
+  _        ==> Bottom   = Bottom
 
 instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Levitated a) where
-  implies (L.Levitate a) (L.Levitate b) | Meet a `partialOrdEq` Meet b
-                                        = L.Top
-                                        | otherwise
-                                        = L.Levitate (a `implies` b)
-  implies L.Top          a              = a
-  implies _              L.Top          = L.Top
-  implies L.Bottom       _              = L.Top
-  implies _              L.Bottom       = L.Bottom
+  (L.Levitate a) ==> (L.Levitate b) | Meet a `partialOrdEq` Meet b
+                                    = L.Top
+                                    | otherwise
+                                    = L.Levitate (a ==> b)
+  L.Top          ==> a              = a
+  _              ==> L.Top          = L.Top
+  L.Bottom       ==> _              = L.Top
+  _              ==> L.Bottom       = L.Bottom
 
 -- |
 -- Every Heyting algebra contains a Boolean algebra. @'toBoolean'@ maps onto it;
@@ -133,17 +143,17 @@ prop_BoundedJoinSemiLattice a b c =
   .&&. counterexample "join identity" ((bottom \/ a) === a)
   .&&. counterexample "join order" (a `joinLeq` (a \/ b))
 
--- For all `a`: `_ /\ a` is left adjoint to  `implies a`, i.e.
--- prop> Boolean (x /\ a `meetLeq` y) `iff'` Boolean (x `meetLeq` (a `implies` b))
+-- For all `a`: `_ /\ a` is left adjoint to  `==> a`, i.e.
+-- prop> Boolean (x /\ a `meetLeq` y) `iff'` Boolean (x `meetLeq` (a `==>` b))
 prop_implies :: (HeytingAlgebra a, Eq a, Show a)
              => a -> a -> Property
 prop_implies a b =
        counterexample
         (show a ++ " ⇒ " ++ show b ++ " /\\ " ++ show a ++ " NOT ≤ " ++ show b)
-        ((a `implies` b /\ a) `meetLeq` b)
+        (((a ==> b) /\ a) `meetLeq` b)
   .&&. counterexample
         (show b ++ " NOT ≤ " ++ show a ++ " ⇒ " ++ show a ++ " /\\ " ++ show b)
-        (b `meetLeq` (a `implies` a /\ b))
+        (b `meetLeq` (a ==> a /\ b))
 
 -- |
 -- Usefull for testing valid instances of `HeytingAlgebra` type class.

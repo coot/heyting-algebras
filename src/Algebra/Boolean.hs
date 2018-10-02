@@ -3,7 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Algebra.Boolean
   ( BooleanAlgebra
-  , implies
+  , (==>)
   , not
   , iff
   , iff'
@@ -25,7 +25,7 @@ import Data.Functor.Identity (Identity (..))
 import Data.Proxy            (Proxy (..))
 import Data.Semigroup        (Endo (..))
 import GHC.Generics          (Generic)
-import Test.QuickCheck
+import Test.QuickCheck hiding ((==>))
 
 import Algebra.Lattice ( Lattice
                        , BoundedLattice
@@ -80,6 +80,11 @@ newtype Boolean a = Boolean
     )
 
 instance HeytingAlgebra a => BooleanAlgebra (Boolean a)
+
+-- TODO: move to tests
+instance (Arbitrary a, HeytingAlgebra a) => Arbitrary (Boolean a) where
+  arbitrary = boolean <$> arbitrary
+  shrink (Boolean a) = [ boolean a' | a' <- shrink a ]
 
 -- |
 -- Smart constructro of the @'Boolean'@ type.
