@@ -22,9 +22,9 @@ let
     then lib.doBenchmark
     else nixpkgs.lib.id;
 
-  heyting-algebra = lib.enableCabalFlag (doHaddock(doTest(doBench(
+  heyting-algebras = lib.enableCabalFlag (doHaddock(doTest(doBench(
     callPackage ./pkg.nix {
       inherit nixpkgs lattices free-algebras;
     })))) "test-with-cabal";
 
-in { inherit heyting-algebra; }
+in { inherit heyting-algebras; }
