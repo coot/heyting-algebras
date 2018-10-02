@@ -19,6 +19,7 @@ library
   exposed-modules:     Algebra.Heyting
                        Algebra.Heyting.Free
                        Algebra.Boolean
+                       Algebra.Boolean.Free
   -- other-modules:
   -- other-extensions:
   build-depends:       base           >= 4.10     && < 4.13
