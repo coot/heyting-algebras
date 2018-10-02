@@ -49,7 +49,7 @@ import Test.QuickCheck hiding ((==>))
 --
 -- prop> x ∧ a ≤ y ⇔ x ≤ (a ⇒ b)
 --
--- This means `a ⇒ b` is an
+-- This means @a ⇒ b@ is an
 -- [exponential object](https://ncatlab.org/nlab/show/exponential%2Bobject),
 -- which makes any Heyting algebra
 -- a [cartesian
@@ -59,9 +59,15 @@ class BoundedLattice a => HeytingAlgebra a where
   (==>) a b = not a \/ b
 
   -- |
-  -- Default implementation is @not a = a '==>' bottom`@; useful for
-  -- optimisation reasons.  Not that if you can provide just @'not'@ the
-  -- default @'==>'@ will make it into @'Algebra.Boolean.BooleanAlgebra'@.
+  -- Default implementation is
+  --
+  -- @
+  -- not a = a '==>' 'bottom'
+  -- @
+  --
+  -- It is useful for optimisation reasons.  Note that if you provide a valid
+  -- Boolean @'not'@ the default @'==>'@ will make it into
+  -- @'Algebra.Boolean.BooleanAlgebra'@.
   not :: a -> a
   not a = a ==> bottom
 
@@ -125,9 +131,13 @@ instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Levitated a) where
 -- containers
 --
 
+-- |
+-- Power set: the cannoical example of a Boolean algebra
 instance (Ord a, Finite a) => HeytingAlgebra (S.Set a) where
   not a = S.fromList universe `S.difference` a
 
+-- |
+-- It is not a boolean algebra (even if the keys are).
 instance (Ord k, Finite k, HeytingAlgebra v) => HeytingAlgebra (M.Map k v) where
   -- _xx__
   -- __yy_
@@ -176,26 +186,28 @@ prop_BoundedJoinSemiLattice a b c =
   .&&. counterexample "join order" (a `joinLeq` (a \/ b))
 
 -- |
--- For all `a`: `_ /\ a` is left adjoint to  `==> a`, i.e.  But rather than:
+-- For all @a@: @_ /\ a@ is left adjoint to  @==> a@, i.e.  But rather than:
 --
--- prop> Boolean (x /\ a `meetLeq` y) iff' Boolean (x `meetLeq` (a '==>' b))
+-- prop> Boolean (x /\ a meetLeq y) iff' Boolean (x meetLeq (a '==>' b))
 --
 -- it checks the equivalent:
 --
--- prop> ((a '==>' b) /\ a) `meetLeq` b
--- prop> b `meetLeq` (a ==> a /\ b)
+-- prop> ((a ==> b) /\ a) meetLeq b
+-- prop> b meetLeq (a ==> a /\ b)
 prop_implies :: (HeytingAlgebra a, Eq a, Show a)
              => a -> a -> Property
 prop_implies a b =
        counterexample
-        (show a ++ " ⇒ " ++ show b ++ " /\\ " ++ show a ++ " NOT ≤ " ++ show b)
+        ("(a ⇒ b) ∧ a NOT ≤ b"
+        ++ "\n a ⇒ b " ++ show (a ==> b))
         (((a ==> b) /\ a) `meetLeq` b)
   .&&. counterexample
-        (show b ++ " NOT ≤ " ++ show a ++ " ⇒ " ++ show a ++ " /\\ " ++ show b)
+        ("b NOT ≤ (a ⇒ a ∧ b)"
+        ++ "\n a ⇒ a ∧ b " ++ show (a ==> a /\ b))
         (b `meetLeq` (a ==> a /\ b))
 
 -- |
--- Usefull for testing valid instances of `HeytingAlgebra` type class. It validates:
+-- Usefull for testing valid instances of @'HeytingAlgebra'@ type class. It validates:
 --
 -- * bounded lattice laws
 -- * @'prop_implies'@
