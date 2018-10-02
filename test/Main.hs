@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
 import Algebra.Lattice ( JoinSemiLattice
@@ -12,12 +13,40 @@ import Algebra.Lattice.Dropped (Dropped (..))
 import Algebra.Lattice.Lifted (Lifted (..))
 import Algebra.Lattice.Levitated (Levitated)
 import qualified Algebra.Lattice.Levitated as L
+import Data.Universe.Class (Universe (..), Finite)
+import qualified Data.Set as S
+import qualified Data.Map as M
+
 import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
 import Test.QuickCheck
 
 import Algebra.Boolean
 import Algebra.Heyting
+
+-- | Arbitrary wrapper
+newtype Arb a = Arb a
+  deriving ( JoinSemiLattice
+           , BoundedJoinSemiLattice
+           , MeetSemiLattice
+           , BoundedMeetSemiLattice
+           , Lattice
+           , BoundedLattice
+           , BooleanAlgebra
+           , HeytingAlgebra
+           , Eq
+           , Ord
+           )
+
+instance Show a => Show (Arb a) where
+  show (Arb a) = show a
+
+instance (Finite k, Arbitrary k, Arbitrary v, Ord k) => Arbitrary (Arb (M.Map k v)) where
+  arbitrary = frequency 
+    [ (1, Arb . M.fromList <$> arbitrary)
+    , (4, Arb . M.fromList . zip universe <$> vectorOf (length (universe @k)) arbitrary)
+    , (6, return $ Arb M.empty)
+    ]
 
 -- |
 -- Tagged wrapper for Arbitrary instances
@@ -62,6 +91,21 @@ instance Arbitrary a => Arbitrary (Tagged Levitated a) where
     : Tagged L.Top
     : [ Tagged (L.Levitate a') | a' <- shrink a ]
   shrink (Tagged L.Top) = []
+
+data S5 = S1 | S2 | S3 | S4 | S5
+  deriving (Ord, Eq, Show)
+
+instance Universe S5 where
+  universe = [S1, S2, S3, S4, S5]
+
+instance Finite S5
+
+instance Arbitrary S5 where
+  arbitrary = elements universe
+
+instance (Arbitrary a, Ord a) => Arbitrary (Tagged S.Set a) where
+  arbitrary = Tagged . S.fromList <$> arbitrary
+  shrink (Tagged as) = [ Tagged (S.fromList as') | as' <- shrink (S.toList as) ]
 
 newtype Composed f g a = Composed (f (g a))
   deriving ( JoinSemiLattice
@@ -140,6 +184,9 @@ main =
 
     prop "HeytingAlgebra (Levitated Bool)" (prop_HeytingAlgebra @(Tagged Levitated Bool))
     prop "Not BooleanAlgebra (Levitated Bool)" (expectFailure $ prop_not @(Tagged Levitated Bool))
+
+    prop "BooleanAlgebra (Set S5)" (prop_BooleanAlgebra @(Tagged S.Set S5))
+    prop "HeytingAlgebra (Map S5 Bool)" (prop_HeytingAlgebra @(Arb (M.Map S5 Bool)))
 
     prop "HeytingAlgebra (Dropped (Lifted Bool))" (prop_HeytingAlgebra @(Composed Dropped Lifted Bool))
     prop "HeytingAlgebra (Lifted (Dropped Bool))" (prop_HeytingAlgebra @(Composed Lifted Dropped Bool))

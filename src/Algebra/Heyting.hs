@@ -20,6 +20,10 @@ import Control.Applicative   (Const (..))
 import Data.Functor.Identity (Identity (..))
 import Data.Proxy            (Proxy (..))
 import Data.Semigroup        (Endo (..))
+import Data.Universe.Class   (Finite, universe)
+import qualified Data.Map as M
+import qualified Data.Map.Merge.Lazy as Merge
+import qualified Data.Set as S
 
 import Algebra.Lattice ( BoundedJoinSemiLattice
                        , BoundedMeetSemiLattice
@@ -116,6 +120,28 @@ instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Levitated a) where
   _              ==> L.Top          = L.Top
   L.Bottom       ==> _              = L.Top
   _              ==> L.Bottom       = L.Bottom
+
+--
+-- containers
+--
+
+instance (Ord a, Finite a) => HeytingAlgebra (S.Set a) where
+  not a = S.fromList universe `S.difference` a
+
+instance (Ord k, Finite k, HeytingAlgebra v) => HeytingAlgebra (M.Map k v) where
+  -- _xx__
+  -- __yy_
+  -- T_iyT where i = x ==> y; T = top
+  a ==> b =
+    Merge.merge
+      Merge.dropMissing     -- drop @x@ if it is missing in @x@
+      Merge.preserveMissing -- preserve @y@ if it is missing @x@
+      (Merge.zipWithMatched (\_ -> (==>))) a b
+                            -- merge with (==>) matching elements
+    \/ M.fromList [(k, top) | k <- universe, not (M.member k a), not (M.member k b) ] 
+                            -- for elements which are not in a, nor in b add
+                            -- a @top@ key
+  
 
 -- |
 -- Every Heyting algebra contains a Boolean algebra. @'toBoolean'@ maps onto it;

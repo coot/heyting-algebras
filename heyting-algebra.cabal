@@ -35,8 +35,10 @@ test-suite heyting-algebra-test
   hs-source-dirs:      test
   main-is:             Main.hs
   build-depends:       base
+                     , containers
                      , lattices
                      , hspec
+                     , universe-base
                      , QuickCheck
                      , heyting-algebra
   default-language:    Haskell2010

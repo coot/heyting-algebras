@@ -24,6 +24,8 @@ import Data.Data             (Data, Typeable)
 import Data.Functor.Identity (Identity (..))
 import Data.Proxy            (Proxy (..))
 import Data.Semigroup        (Endo (..))
+import Data.Universe.Class   (Finite)
+import qualified Data.Set as S
 import GHC.Generics          (Generic)
 import Test.QuickCheck hiding ((==>))
 
@@ -110,6 +112,12 @@ instance BooleanAlgebra a => BooleanAlgebra (Const a b)
 instance BooleanAlgebra a => BooleanAlgebra (Endo a)
 
 instance (BooleanAlgebra a, BooleanAlgebra b) => BooleanAlgebra (a, b)
+
+--
+-- containers
+--
+
+instance (Ord a, Finite a) => BooleanAlgebra (S.Set a)
 
 -- 
 -- Properties
