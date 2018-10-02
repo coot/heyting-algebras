@@ -18,11 +18,10 @@ import Data.Algebra.Free
   ( AlgebraType0
   , AlgebraType
   , FreeAlgebra (..)
-  , Proof (..)
+  , proof
   , fmapFree
   , bindFree
   )
-import Data.Constraint (Dict (..))
 
 import Algebra.Heyting (HeytingAlgebra (..))
 
@@ -58,8 +57,8 @@ instance FreeAlgebra FreeHeyting where
   returnFree a = FreeHeyting (\inj -> inj a)
   foldMapFree f (FreeHeyting inj) = inj f
 
-  proof  = Proof Dict
-  forget = Proof Dict
+  codom  = proof
+  forget = proof
 
 instance Functor FreeHeyting where
   fmap = fmapFree

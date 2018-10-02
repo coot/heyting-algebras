@@ -16,11 +16,10 @@ import Data.Algebra.Free
   ( AlgebraType0
   , AlgebraType
   , FreeAlgebra (..)
-  , Proof (..)
+  , proof
   , fmapFree
   , bindFree
   )
-import Data.Constraint (Dict (..))
 
 import Algebra.Boolean (BooleanAlgebra)
 import Algebra.Heyting (HeytingAlgebra (..))
@@ -58,8 +57,8 @@ instance FreeAlgebra FreeBoolean where
   returnFree a = FreeBoolean (\inj -> inj a)
   foldMapFree f (FreeBoolean inj) = inj f
 
-  proof  = Proof Dict
-  forget = Proof Dict
+  codom  = proof
+  forget = proof
 
 instance Functor FreeBoolean where
   fmap = fmapFree
