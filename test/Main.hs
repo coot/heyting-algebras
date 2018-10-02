@@ -19,7 +19,9 @@ import Test.QuickCheck
 import Algebra.Boolean
 import Algebra.Heyting
 
-newtype HArbitrary t a = HArbitrary {runHArbitrary :: t a }
+-- |
+-- Tagged wrapper for Arbitrary instances
+newtype Tagged t a = Tagged (t a)
   deriving ( JoinSemiLattice
            , BoundedJoinSemiLattice
            , MeetSemiLattice
@@ -30,34 +32,36 @@ newtype HArbitrary t a = HArbitrary {runHArbitrary :: t a }
            , HeytingAlgebra
            , Eq
            , Ord
-           , Show
            )
 
-instance Arbitrary a => Arbitrary (HArbitrary Lifted a) where
-  arbitrary = HArbitrary . maybe Bottom Lift <$> arbitrary
-  shrink (HArbitrary Bottom)   = []
-  shrink (HArbitrary (Lift a)) =
-    HArbitrary Bottom : [ HArbitrary (Lift a') | a' <- shrink a ]
+instance Show (t a) => Show (Tagged t a) where
+  show (Tagged ta) = show ta
 
-instance Arbitrary a => Arbitrary (HArbitrary Dropped a) where
-  arbitrary = HArbitrary . maybe Top Drop <$> arbitrary
-  shrink (HArbitrary Top)   = []
-  shrink (HArbitrary (Drop a)) =
-    HArbitrary Top : [ HArbitrary (Drop a') | a' <- shrink a ]
+instance Arbitrary a => Arbitrary (Tagged Lifted a) where
+  arbitrary = Tagged . maybe Bottom Lift <$> arbitrary
+  shrink (Tagged Bottom)   = []
+  shrink (Tagged (Lift a)) =
+    Tagged Bottom : [ Tagged (Lift a') | a' <- shrink a ]
 
-instance Arbitrary a => Arbitrary (HArbitrary Levitated a) where
+instance Arbitrary a => Arbitrary (Tagged Dropped a) where
+  arbitrary = Tagged . maybe Top Drop <$> arbitrary
+  shrink (Tagged Top)   = []
+  shrink (Tagged (Drop a)) =
+    Tagged Top : [ Tagged (Drop a') | a' <- shrink a ]
+
+instance Arbitrary a => Arbitrary (Tagged Levitated a) where
   arbitrary = frequency
-    [ (1, return $ HArbitrary L.Top)
-    , (1, return $ HArbitrary L.Bottom)
-    , (2, HArbitrary . L.Levitate <$> arbitrary)
+    [ (1, return $ Tagged L.Top)
+    , (1, return $ Tagged L.Bottom)
+    , (2, Tagged . L.Levitate <$> arbitrary)
     ]
 
-  shrink (HArbitrary L.Bottom) = []
-  shrink (HArbitrary (L.Levitate a))
-    = HArbitrary L.Bottom
-    : HArbitrary L.Top
-    : [ HArbitrary (L.Levitate a') | a' <- shrink a ]
-  shrink (HArbitrary L.Top) = []
+  shrink (Tagged L.Bottom) = []
+  shrink (Tagged (L.Levitate a))
+    = Tagged L.Bottom
+    : Tagged L.Top
+    : [ Tagged (L.Levitate a') | a' <- shrink a ]
+  shrink (Tagged L.Top) = []
 
 newtype Composed f g a = Composed (f (g a))
   deriving ( JoinSemiLattice
@@ -124,12 +128,17 @@ main =
   hspec $ do
     prop "BooleanAlgebra Bool" (prop_BooleanAlgebra @Bool)
     prop "BooleanAlgebra (Bool, Bool)" (prop_BooleanAlgebra @(Bool, Bool))
-    prop "BooleanAlgebra Boolean (Lifted Bool)" (prop_BooleanAlgebra @(Boolean (HArbitrary Lifted Bool)))
+    prop "BooleanAlgebra Boolean (Lifted Bool)" (prop_BooleanAlgebra @(Boolean (Tagged Lifted Bool)))
 
-    prop "HeytingAlgebra Bool" (prop_HeytingAlgebra @(Bool))
-    prop "HeytingAlgebra (Lifted Bool)" (prop_HeytingAlgebra @(HArbitrary Lifted Bool))
-    prop "HeytingAlgebra (Dropped Bool)" (prop_HeytingAlgebra @(HArbitrary Dropped Bool))
-    prop "HeytingAlgebra (Levitated Bool)" (prop_HeytingAlgebra @(HArbitrary Levitated Bool))
+    prop "HeytingAlgebra (Lifted Bool)" (prop_HeytingAlgebra @(Tagged Lifted Bool))
+    prop "Not BooleanAlgebra (Lifted Bool)" (expectFailure $ prop_not @(Tagged Lifted Bool))
+
+    prop "HeytingAlgebra (Dropped Bool)" (prop_HeytingAlgebra @(Tagged Dropped Bool))
+    prop "Not BooleanAlgebra (Dropped Bool)" (expectFailure $ prop_not @(Tagged Dropped Bool))
+
+    prop "HeytingAlgebra (Levitated Bool)" (prop_HeytingAlgebra @(Tagged Levitated Bool))
+    prop "Not BooleanAlgebra (Levitated Bool)" (expectFailure $ prop_not @(Tagged Levitated Bool))
+
     prop "HeytingAlgebra (Dropped (Lifted Bool))" (prop_HeytingAlgebra @(Composed Dropped Lifted Bool))
     prop "HeytingAlgebra (Lifted (Dropped Bool))" (prop_HeytingAlgebra @(Composed Lifted Dropped Bool))
     prop "HeytingAlgebra (Lifted (Lifted Bool))" (prop_HeytingAlgebra @(Composed Lifted Lifted Bool))
