@@ -16,11 +16,12 @@ module Algebra.Heyting
 import Prelude hiding (not)
 import qualified Prelude
 
-import Control.Applicative   (Const (..))
-import Data.Functor.Identity (Identity (..))
-import Data.Proxy            (Proxy (..))
-import Data.Semigroup        (Endo (..))
-import Data.Universe.Class   (Finite, universe)
+import Control.Applicative    (Const (..))
+import Data.Functor.Identity  (Identity (..))
+import Data.Proxy             (Proxy (..))
+import Data.Semigroup         (All (..), Any (..), Endo (..))
+import Data.Tagged            (Tagged (..))
+import Data.Universe.Class    (Finite, universe)
 import qualified Data.Map as M
 import qualified Data.Map.Merge.Lazy as Merge
 import qualified Data.Set as S
@@ -85,11 +86,22 @@ instance HeytingAlgebra Bool where
   a ==> b = Prelude.not a \/ b
   not     = Prelude.not
 
+instance HeytingAlgebra All where
+  All a ==> All b = All (a ==> b)
+  not (All a)     = All (not a)
+
+instance HeytingAlgebra Any where
+  Any a ==> Any b = Any (a ==> b)
+  not (Any a)     = Any (not a)
+
 instance HeytingAlgebra () where
   _ ==> _ = ()
 
 instance HeytingAlgebra (Proxy a) where
   _ ==> _ = Proxy
+
+instance HeytingAlgebra a => HeytingAlgebra (Tagged t a) where
+  Tagged a ==> Tagged b = Tagged (a ==> b)
 
 instance HeytingAlgebra b => HeytingAlgebra (a -> b) where
   f ==> g = \a -> f a ==> g a
@@ -105,6 +117,10 @@ instance HeytingAlgebra a => HeytingAlgebra (Endo a) where
 
 instance (HeytingAlgebra a, HeytingAlgebra b) => HeytingAlgebra (a, b) where
   (a0, b0) ==> (a1, b1) = (a0 ==> a1, b0 ==> b1)
+
+--
+-- Dropped, Lifted, Levitated
+--
 
 instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Dropped a) where
   (Drop a) ==> (Drop b) | Meet a `partialOrdEq` Meet b = Top

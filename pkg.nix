@@ -1,10 +1,10 @@
-{ mkDerivation, base, hspec, lattices, QuickCheck, nixpkgs, stdenv }:
+{ mkDerivation, base, hspec, lattices, QuickCheck, tagged, nixpkgs, stdenv }:
 mkDerivation {
   pname = "heyting-algebra";
   version = "0.0.1.0";
   src = nixpkgs.lib.sourceFilesBySuffices ./.
     [ ".hs" "LICENSE" "ChangeLog.md" "heyting-algebra.cabal" ];
-  libraryHaskellDepends = [ base lattices QuickCheck ];
+  libraryHaskellDepends = [ base lattices QuickCheck tagged ];
   testHaskellDepends = [ base hspec lattices QuickCheck ];
   license = stdenv.lib.licenses.mpl20;
   enableSeparateDocOutput = false;

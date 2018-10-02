@@ -19,12 +19,13 @@ module Algebra.Boolean
 
 import Prelude hiding (not)
 
-import Control.Applicative   (Const (..))
-import Data.Data             (Data, Typeable)
-import Data.Functor.Identity (Identity (..))
-import Data.Proxy            (Proxy (..))
-import Data.Semigroup        (Endo (..))
-import Data.Universe.Class   (Finite)
+import Control.Applicative    (Const (..))
+import Data.Data              (Data, Typeable)
+import Data.Functor.Identity  (Identity (..))
+import Data.Proxy             (Proxy (..))
+import Data.Semigroup         (All (..), Any (..), Endo (..))
+import Data.Tagged            (Tagged (..))
+import Data.Universe.Class    (Finite)
 import qualified Data.Set as S
 import GHC.Generics          (Generic)
 import Test.QuickCheck hiding ((==>))
@@ -97,11 +98,17 @@ boolean = Boolean . toBoolean
 -- Instances
 --
 
+instance BooleanAlgebra Bool
+
+instance BooleanAlgebra All
+
+instance BooleanAlgebra Any
+
 instance BooleanAlgebra ()
 
 instance BooleanAlgebra (Proxy a)
 
-instance BooleanAlgebra Bool
+instance BooleanAlgebra a => BooleanAlgebra (Tagged t a)
 
 instance BooleanAlgebra b => BooleanAlgebra (a -> b)
 
