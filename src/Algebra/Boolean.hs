@@ -115,12 +115,17 @@ instance (BooleanAlgebra a, BooleanAlgebra b) => BooleanAlgebra (a, b)
 -- Properties
 --
 
+-- |
+-- Test that @'not'@ satisfies Boolean algebra axioms.
 prop_not :: (BooleanAlgebra a, Eq a, Show a) => a -> Property
 prop_not a =
-       not (not a) === a
-  .&&. not a /\ a === bottom
-  .&&. not a \/ a === top
+       counterexample "not (not a) /= a" (not (not a) === a)
+  .&&. counterexample "not a ∧ a /= bottom" (not a /\ a === bottom)
+  .&&. counterexample "not a ∨ a /= top" (not a \/ a === top)
 
+-- |
+-- Test that @a@ is satisfy both @'Algebra.Heyting.prop_HeytingAlgebra'@ and
+-- @'prop_not'@.
 prop_BooleanAlgebra :: (BooleanAlgebra a, Eq a, Show a)
                     => a -> a -> a -> Property
 prop_BooleanAlgebra a b c =

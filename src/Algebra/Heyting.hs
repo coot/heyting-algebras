@@ -6,6 +6,8 @@ module Algebra.Heyting
   , toBoolean
 
     -- * Properties
+  , prop_BoundedMeetSemiLattice
+  , prop_BoundedJoinSemiLattice
   , prop_HeytingAlgebra
   , prop_implies
   )
@@ -126,6 +128,8 @@ toBoolean = not . not
 -- Properties
 --
 
+-- |
+-- Verfifies if bounded meet semilattice laws.
 prop_BoundedMeetSemiLattice :: (BoundedMeetSemiLattice a, Eq a, Show a)
                             => a -> a -> a -> Property
 prop_BoundedMeetSemiLattice a b c =
@@ -135,6 +139,8 @@ prop_BoundedMeetSemiLattice a b c =
   .&&. counterexample "meet identity" ((top /\ a) === a)
   .&&. counterexample "meet order" ((a /\ b) `meetLeq` a)
 
+-- |
+-- Verfifies if bounded join semilattice laws.
 prop_BoundedJoinSemiLattice :: (BoundedJoinSemiLattice a, Eq a, Show a) => a -> a -> a -> Property
 prop_BoundedJoinSemiLattice a b c =
        counterexample "join associativity" ((a \/ (b \/ c)) === ((a \/ b) \/ c))
@@ -143,8 +149,15 @@ prop_BoundedJoinSemiLattice a b c =
   .&&. counterexample "join identity" ((bottom \/ a) === a)
   .&&. counterexample "join order" (a `joinLeq` (a \/ b))
 
--- For all `a`: `_ /\ a` is left adjoint to  `==> a`, i.e.
--- prop> Boolean (x /\ a `meetLeq` y) `iff'` Boolean (x `meetLeq` (a `==>` b))
+-- |
+-- For all `a`: `_ /\ a` is left adjoint to  `==> a`, i.e.  But rather than:
+--
+-- prop> Boolean (x /\ a `meetLeq` y) iff' Boolean (x `meetLeq` (a '==>' b))
+--
+-- it checks the equivalent:
+--
+-- prop> ((a '==>' b) /\ a) `meetLeq` b
+-- prop> b `meetLeq` (a ==> a /\ b)
 prop_implies :: (HeytingAlgebra a, Eq a, Show a)
              => a -> a -> Property
 prop_implies a b =
@@ -156,7 +169,10 @@ prop_implies a b =
         (b `meetLeq` (a ==> a /\ b))
 
 -- |
--- Usefull for testing valid instances of `HeytingAlgebra` type class.
+-- Usefull for testing valid instances of `HeytingAlgebra` type class. It validates:
+--
+-- * bounded lattice laws
+-- * @'prop_implies'@
 prop_HeytingAlgebra :: (HeytingAlgebra a, Eq a, Show a)
                     => a -> a -> a -> Property
 prop_HeytingAlgebra a b c = 
