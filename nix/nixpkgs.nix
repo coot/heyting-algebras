@@ -12,11 +12,13 @@ let
       in {
         haskell = super.haskell // {
           packages = super.haskell.packages // {
-            ${compiler} = super.haskell.packages.${compiler}.override {
+            ghc802 = super.haskell.packages.ghc802.override {
               overrides = self: super: {
-                spdx = lib.dontCheck (super.callPackage ./spdx.nix {});
-                # purescript fb8daf 
-                purescript = super.callPackage ./purescript.nix {};
+                ansi-terminal = super.callPackage ./ansi-terminal-0.6.3.1.nix {};
+                async = super.callPackage ./async-2.1.1.1.nix {};
+                exceptions = super.callPackage ./exceptions-0.8.3.nix {};
+                stm = super.callPackage ./stm-2.4.5.1.nix {};
+                concurrent-output = super.callPackage ./concurrent-output-1.9.2.nix {};
               };
             };
           };
