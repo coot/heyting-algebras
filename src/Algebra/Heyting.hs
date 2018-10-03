@@ -18,6 +18,7 @@ import qualified Prelude
 
 import Control.Applicative    (Const (..))
 import Data.Functor.Identity  (Identity (..))
+import Data.Hashable          (Hashable)
 import Data.Proxy             (Proxy (..))
 import Data.Semigroup         (All (..), Any (..), Endo (..))
 import Data.Tagged            (Tagged (..))
@@ -25,6 +26,8 @@ import Data.Universe.Class    (Finite, universe)
 import qualified Data.Map as M
 import qualified Data.Map.Merge.Lazy as Merge
 import qualified Data.Set as S
+import qualified Data.HashMap.Lazy as HM
+import qualified Data.HashSet      as HS
 
 import Algebra.Lattice ( BoundedJoinSemiLattice (..)
                        , BoundedMeetSemiLattice (..)
@@ -78,6 +81,13 @@ iff a b = (a ==> b) /\ (b ==> a)
 
 iff' :: (Eq a, HeytingAlgebra a) => a -> a -> Bool
 iff' a b = Meet top `leq` Meet (iff a b)
+  
+-- |
+-- Every Heyting algebra contains a Boolean algebra. @'toBoolean'@ maps onto it;
+-- moreover it is a monad (Heyting algebra is a category as every poset is) which
+-- preserves finite infima.
+toBoolean :: HeytingAlgebra a => a -> a
+toBoolean = not . not
 
 instance HeytingAlgebra Bool where
   not     = Prelude.not
@@ -148,29 +158,29 @@ instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Levitated a) where
 instance (Ord a, Finite a) => HeytingAlgebra (S.Set a) where
   not a = S.fromList universe `S.difference` a
 
+instance (Eq a, Finite a, Hashable a) => HeytingAlgebra (HS.HashSet a) where
+  not a = HS.fromList universe `HS.difference` a
+
 -- |
--- It is not a boolean algebra (even if the keys are).
+-- It is not a boolean algebra (even if values are).
 instance (Ord k, Finite k, HeytingAlgebra v) => HeytingAlgebra (M.Map k v) where
   -- _xx__
   -- __yy_
-  -- T_iyT where i = x ==> y; T = top
+  -- T_iyT where i = x ==> y; T = top; _ missing (or removed key)
   a ==> b =
     Merge.merge
-      Merge.dropMissing     -- drop @x@ if it is missing in @x@
-      Merge.preserveMissing -- preserve @y@ if it is missing @x@
+      Merge.dropMissing     -- drop @x@ if it is missing in @b@
+      Merge.preserveMissing -- preserve @y@ if it is missing @a@
       (Merge.zipWithMatched (\_ -> (==>))) a b
-                            -- merge with (==>) matching elements
+                            -- merge with @==>@ matching elements
     \/ M.fromList [(k, top) | k <- universe, not (M.member k a), not (M.member k b) ] 
                             -- for elements which are not in a, nor in b add
                             -- a @top@ key
-  
 
--- |
--- Every Heyting algebra contains a Boolean algebra. @'toBoolean'@ maps onto it;
--- moreover it is a monad (Heyting algebra is a category as every poset is) which
--- preserves finite infima.
-toBoolean :: HeytingAlgebra a => a -> a
-toBoolean = not . not
+instance (Eq k, Finite k, Hashable k, HeytingAlgebra v) => HeytingAlgebra (HM.HashMap k v) where
+  a ==> b = HM.intersectionWith (==>) a b
+    `HM.union` HM.difference b a
+    `HM.union` HM.fromList [(k, top) | k <- universe, not (HM.member k a), not (HM.member k b)]
 
 --
 -- Properties
