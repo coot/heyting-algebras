@@ -49,49 +49,31 @@ instance (Finite k, Arbitrary k, Arbitrary v, Ord k) => Arbitrary (Arb (M.Map k 
     , (6, return $ Arb M.empty)
     ]
 
--- |
--- Tagged wrapper for Arbitrary instances
-newtype Tagged t a = Tagged (t a)
-  deriving ( JoinSemiLattice
-           , BoundedJoinSemiLattice
-           , MeetSemiLattice
-           , BoundedMeetSemiLattice
-           , Lattice
-           , BoundedLattice
-           , BooleanAlgebra
-           , HeytingAlgebra
-           , Eq
-           , Ord
-           )
+instance Arbitrary a => Arbitrary (Arb (Lifted a)) where
+  arbitrary = Arb . maybe Bottom Lift <$> arbitrary
+  shrink (Arb Bottom)   = []
+  shrink (Arb (Lift a)) =
+    Arb Bottom : [ Arb (Lift a') | a' <- shrink a ]
 
-instance Show (t a) => Show (Tagged t a) where
-  show (Tagged ta) = show ta
+instance Arbitrary a => Arbitrary (Arb (Dropped a)) where
+  arbitrary = Arb . maybe Top Drop <$> arbitrary
+  shrink (Arb Top)   = []
+  shrink (Arb (Drop a)) =
+    Arb Top : [ Arb (Drop a') | a' <- shrink a ]
 
-instance Arbitrary a => Arbitrary (Tagged Lifted a) where
-  arbitrary = Tagged . maybe Bottom Lift <$> arbitrary
-  shrink (Tagged Bottom)   = []
-  shrink (Tagged (Lift a)) =
-    Tagged Bottom : [ Tagged (Lift a') | a' <- shrink a ]
-
-instance Arbitrary a => Arbitrary (Tagged Dropped a) where
-  arbitrary = Tagged . maybe Top Drop <$> arbitrary
-  shrink (Tagged Top)   = []
-  shrink (Tagged (Drop a)) =
-    Tagged Top : [ Tagged (Drop a') | a' <- shrink a ]
-
-instance Arbitrary a => Arbitrary (Tagged Levitated a) where
+instance Arbitrary a => Arbitrary (Arb (Levitated a)) where
   arbitrary = frequency
-    [ (1, return $ Tagged L.Top)
-    , (1, return $ Tagged L.Bottom)
-    , (2, Tagged . L.Levitate <$> arbitrary)
+    [ (1, return $ Arb L.Top)
+    , (1, return $ Arb L.Bottom)
+    , (2, Arb . L.Levitate <$> arbitrary)
     ]
 
-  shrink (Tagged L.Bottom) = []
-  shrink (Tagged (L.Levitate a))
-    = Tagged L.Bottom
-    : Tagged L.Top
-    : [ Tagged (L.Levitate a') | a' <- shrink a ]
-  shrink (Tagged L.Top) = []
+  shrink (Arb L.Bottom) = []
+  shrink (Arb (L.Levitate a))
+    = Arb L.Bottom
+    : Arb L.Top
+    : [ Arb (L.Levitate a') | a' <- shrink a ]
+  shrink (Arb L.Top) = []
 
 data S5 = S1 | S2 | S3 | S4 | S5
   deriving (Ord, Eq, Show)
@@ -104,10 +86,12 @@ instance Finite S5
 instance Arbitrary S5 where
   arbitrary = elements universe
 
-instance (Arbitrary a, Ord a) => Arbitrary (Tagged S.Set a) where
-  arbitrary = Tagged . S.fromList <$> arbitrary
-  shrink (Tagged as) = [ Tagged (S.fromList as') | as' <- shrink (S.toList as) ]
+instance (Arbitrary a, Ord a) => Arbitrary (Arb (S.Set a)) where
+  arbitrary = Arb . S.fromList <$> arbitrary
+  shrink (Arb as) = [ Arb (S.fromList as') | as' <- shrink (S.toList as) ]
 
+-- Another arbitrary newtype wrapper; using tagged type let us avoid
+-- overlapping instances.
 newtype Composed f g a = Composed (f (g a))
   deriving ( JoinSemiLattice
            , BoundedJoinSemiLattice
@@ -180,19 +164,19 @@ tests =
     [ testGroup "BooleanAlgebra tests"
         [ testProperty "BooleanAlgebra Bool" (prop_BooleanAlgebra @Bool)
         , testProperty "BooleanAlgebra (Bool, Bool)" (prop_BooleanAlgebra @(Bool, Bool))
-        , testProperty "BooleanAlgebra Boolean (Lifted Bool)" (prop_BooleanAlgebra @(Boolean (Tagged Lifted Bool)))
+        , testProperty "BooleanAlgebra Boolean (Lifted Bool)" (prop_BooleanAlgebra @(Boolean (Arb (Lifted Bool))))
         ]
     , testGroup "HeytingAlgebra tests"
-        [ testProperty "HeytingAlgebra (Lifted Bool)" (prop_HeytingAlgebra @(Tagged Lifted Bool))
-        , testProperty "Not BooleanAlgebra (Lifted Bool)" (expectFailure $ prop_not @(Tagged Lifted Bool))
+        [ testProperty "HeytingAlgebra (Lifted Bool)" (prop_HeytingAlgebra @(Arb (Lifted Bool)))
+        , testProperty "Not BooleanAlgebra (Lifted Bool)" (expectFailure $ prop_not @(Arb (Lifted Bool)))
 
-        , testProperty "HeytingAlgebra (Dropped Bool)" (prop_HeytingAlgebra @(Tagged Dropped Bool))
-        , testProperty "Not BooleanAlgebra (Dropped Bool)" (expectFailure $ prop_not @(Tagged Dropped Bool))
+        , testProperty "HeytingAlgebra (Dropped Bool)" (prop_HeytingAlgebra @(Arb (Dropped Bool)))
+        , testProperty "Not BooleanAlgebra (Dropped Bool)" (expectFailure $ prop_not @(Arb (Dropped Bool)))
 
-        , testProperty "HeytingAlgebra (Levitated Bool)" (prop_HeytingAlgebra @(Tagged Levitated Bool))
-        , testProperty "Not BooleanAlgebra (Levitated Bool)" (expectFailure $ prop_not @(Tagged Levitated Bool))
+        , testProperty "HeytingAlgebra (Levitated Bool)" (prop_HeytingAlgebra @(Arb (Levitated Bool)))
+        , testProperty "Not BooleanAlgebra (Levitated Bool)" (expectFailure $ prop_not @(Arb (Levitated Bool)))
 
-        , testProperty "BooleanAlgebra (Set S5)" (prop_BooleanAlgebra @(Tagged S.Set S5))
+        , testProperty "BooleanAlgebra (Set S5)" (prop_BooleanAlgebra @(Arb (S.Set S5)))
         , testProperty "HeytingAlgebra (Map S5 Bool)" (prop_HeytingAlgebra @(Arb (M.Map S5 Bool)))
 
         , testProperty "HeytingAlgebra (Dropped (Lifted Bool))" (prop_HeytingAlgebra @(Composed Dropped Lifted Bool))
