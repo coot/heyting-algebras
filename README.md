@@ -17,3 +17,8 @@ posets (categories with at most one arrow between any objects), which are also
 Cartesian closed (and finitely (co-)complete).  This is exactly the same kind
 of category that simply typed lambda calculus come from: hence one more
 incentive to learn about them!
+
+The most important addition is the implication `(==>) :: HeytingAlgebra a =>
+a -> a -> a`; since every Boolean algebra is a Heyting algebra via `a ==>
+b = not a \/ b` (using the lattice notation for `or`).  It is very handy in
+expression conditional logic.

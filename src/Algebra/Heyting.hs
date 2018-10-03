@@ -54,21 +54,20 @@ import Test.QuickCheck hiding ((==>))
 -- a [cartesian
 -- closed category](https://ncatlab.org/nlab/show/cartesian%2Bclosed%2Bcategory).
 class BoundedLattice a => HeytingAlgebra a where
+  -- |
+  -- Default implementation: @a ==> b = not a \/ b@, it requires @not@ to
+  -- satisfy Boolean axioms, which will make it into a Boolean algebra.
   (==>) :: a -> a -> a
   (==>) a b = not a \/ b
 
   -- |
-  -- Default implementation is
+  -- Default implementation: @not a = a '==>' 'bottom'@
   --
-  -- @
-  -- not a = a '==>' 'bottom'
-  -- @
-  --
-  -- It is useful for optimisation reasons.  Note that if you provide a valid
-  -- Boolean @'not'@ the default @'==>'@ will make it into
-  -- @'Algebra.Boolean.BooleanAlgebra'@.
+  -- It is useful for optimisation reasons.
   not :: a -> a
   not a = a ==> bottom
+
+  {-# MINIMAL (==>) | not #-}
 
 -- |
 -- Less than fixity of both @'\/'@ and @'/\'@.
@@ -81,7 +80,6 @@ iff' :: (Eq a, HeytingAlgebra a) => a -> a -> Bool
 iff' a b = Meet top `leq` Meet (iff a b)
 
 instance HeytingAlgebra Bool where
-  a ==> b = Prelude.not a \/ b
   not     = Prelude.not
 
 instance HeytingAlgebra All where
