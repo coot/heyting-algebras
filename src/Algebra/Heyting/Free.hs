@@ -28,6 +28,10 @@ import Algebra.Heyting (HeytingAlgebra (..))
 -- |
 -- Free Heyting algebra.  @'FreeAlgebra'@ instance provides all the usual
 -- combinators for a free algebra.
+--
+-- The
+-- [graph](https://en.wikipedia.org/wiki/Heyting_algebra#/media/File:Rieger-Nishimura.svg)
+-- of free Heyting algebra with one generator, i.e. @'FreeHeyting' ()@.
 newtype FreeHeyting a = FreeHeyting
   { runFreeHeyting :: forall h . HeytingAlgebra h => (a -> h) -> h }
 

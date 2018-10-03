@@ -1,6 +1,6 @@
 # Heyting Algebras
 [![Maintainer: coot](https://img.shields.io/badge/maintainer-coot-lightgrey.svg)](http://github.com/coot)
-[![Travis Build Status](https://travis-ci.org/coot/heyting-algebra.svg?branch=master)](https://travis-ci.org/coot/heyting-algebra)
+[![Travis Build Status](https://travis-ci.org/coot/heyting-algebras.svg?branch=master)](https://travis-ci.org/coot/heyting-algebras)
 
 This package contains type classes and instances for many Heyting algebras
 which are in the Haskell eco-system.  It is build on top of
