@@ -17,12 +17,13 @@ import Data.Universe.Class (Universe (..), Finite)
 import qualified Data.Set as S
 import qualified Data.Map as M
 
-import Test.Hspec
-import Test.Hspec.QuickCheck (prop)
 import Test.QuickCheck
 
 import Algebra.Boolean
 import Algebra.Heyting
+
+import Test.Tasty
+import Test.Tasty.QuickCheck
 
 -- | Arbitrary wrapper
 newtype Arb a = Arb a
@@ -169,26 +170,34 @@ instance Arbitrary a => Arbitrary (Composed Dropped Dropped a) where
        [ Composed Top, Composed (Drop Top) ]
     ++ [ Composed (Drop (Drop a')) | a' <- shrink a ]
 
+
 main :: IO ()
-main =
-  hspec $ do
-    prop "BooleanAlgebra Bool" (prop_BooleanAlgebra @Bool)
-    prop "BooleanAlgebra (Bool, Bool)" (prop_BooleanAlgebra @(Bool, Bool))
-    prop "BooleanAlgebra Boolean (Lifted Bool)" (prop_BooleanAlgebra @(Boolean (Tagged Lifted Bool)))
+main = defaultMain tests
 
-    prop "HeytingAlgebra (Lifted Bool)" (prop_HeytingAlgebra @(Tagged Lifted Bool))
-    prop "Not BooleanAlgebra (Lifted Bool)" (expectFailure $ prop_not @(Tagged Lifted Bool))
+tests :: TestTree
+tests =
+  testGroup "heyting-algebras tests"
+    [ testGroup "BooleanAlgebra tests"
+        [ testProperty "BooleanAlgebra Bool" (prop_BooleanAlgebra @Bool)
+        , testProperty "BooleanAlgebra (Bool, Bool)" (prop_BooleanAlgebra @(Bool, Bool))
+        , testProperty "BooleanAlgebra Boolean (Lifted Bool)" (prop_BooleanAlgebra @(Boolean (Tagged Lifted Bool)))
+        ]
+    , testGroup "HeytingAlgebra tests"
+        [ testProperty "HeytingAlgebra (Lifted Bool)" (prop_HeytingAlgebra @(Tagged Lifted Bool))
+        , testProperty "Not BooleanAlgebra (Lifted Bool)" (expectFailure $ prop_not @(Tagged Lifted Bool))
 
-    prop "HeytingAlgebra (Dropped Bool)" (prop_HeytingAlgebra @(Tagged Dropped Bool))
-    prop "Not BooleanAlgebra (Dropped Bool)" (expectFailure $ prop_not @(Tagged Dropped Bool))
+        , testProperty "HeytingAlgebra (Dropped Bool)" (prop_HeytingAlgebra @(Tagged Dropped Bool))
+        , testProperty "Not BooleanAlgebra (Dropped Bool)" (expectFailure $ prop_not @(Tagged Dropped Bool))
 
-    prop "HeytingAlgebra (Levitated Bool)" (prop_HeytingAlgebra @(Tagged Levitated Bool))
-    prop "Not BooleanAlgebra (Levitated Bool)" (expectFailure $ prop_not @(Tagged Levitated Bool))
+        , testProperty "HeytingAlgebra (Levitated Bool)" (prop_HeytingAlgebra @(Tagged Levitated Bool))
+        , testProperty "Not BooleanAlgebra (Levitated Bool)" (expectFailure $ prop_not @(Tagged Levitated Bool))
 
-    prop "BooleanAlgebra (Set S5)" (prop_BooleanAlgebra @(Tagged S.Set S5))
-    prop "HeytingAlgebra (Map S5 Bool)" (prop_HeytingAlgebra @(Arb (M.Map S5 Bool)))
+        , testProperty "BooleanAlgebra (Set S5)" (prop_BooleanAlgebra @(Tagged S.Set S5))
+        , testProperty "HeytingAlgebra (Map S5 Bool)" (prop_HeytingAlgebra @(Arb (M.Map S5 Bool)))
 
-    prop "HeytingAlgebra (Dropped (Lifted Bool))" (prop_HeytingAlgebra @(Composed Dropped Lifted Bool))
-    prop "HeytingAlgebra (Lifted (Dropped Bool))" (prop_HeytingAlgebra @(Composed Lifted Dropped Bool))
-    prop "HeytingAlgebra (Lifted (Lifted Bool))" (prop_HeytingAlgebra @(Composed Lifted Lifted Bool))
-    prop "HeytingAlgebra (Dropped (Dropped Bool))" (prop_HeytingAlgebra @(Composed Dropped Dropped Bool))
+        , testProperty "HeytingAlgebra (Dropped (Lifted Bool))" (prop_HeytingAlgebra @(Composed Dropped Lifted Bool))
+        , testProperty "HeytingAlgebra (Lifted (Dropped Bool))" (prop_HeytingAlgebra @(Composed Lifted Dropped Bool))
+        , testProperty "HeytingAlgebra (Lifted (Lifted Bool))" (prop_HeytingAlgebra @(Composed Lifted Lifted Bool))
+        , testProperty "HeytingAlgebra (Dropped (Dropped Bool))" (prop_HeytingAlgebra @(Composed Dropped Dropped Bool))
+        ]
+    ]
