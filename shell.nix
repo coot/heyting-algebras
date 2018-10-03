@@ -10,7 +10,7 @@ let
 in
   {
     heyting-algebra = if nixpkgs.lib.inNixShell
-      then default.heyting-algebra.env
-      else default.heyting-algebra;
+      then default.heyting-algebras.env
+      else default.heyting-algebras;
   }
 
