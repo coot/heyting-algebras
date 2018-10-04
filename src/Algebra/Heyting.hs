@@ -43,18 +43,27 @@ import Algebra.Lattice.Levitated (Levitated)
 import qualified Algebra.Lattice.Levitated as L
 import Algebra.PartialOrd (leq)
 import Test.QuickCheck hiding ((==>))
+import qualified Test.QuickCheck as QC
 
 -- |
 -- Heyting algebra is a bounded semi-lattice with implication which should
 -- satisfy the following law:
 --
--- prop> x ∧ a ≤ y ⇔ x ≤ (a ⇒ b)
+-- prop> x ∧ a ≤ b ⇔ x ≤ (a ⇒ b)
 --
 -- This means @a ⇒ b@ is an
 -- [exponential object](https://ncatlab.org/nlab/show/exponential%2Bobject),
 -- which makes any Heyting algebra
 -- a [cartesian
 -- closed category](https://ncatlab.org/nlab/show/cartesian%2Bclosed%2Bcategory).
+--
+-- Some useful properties of Heyting algebras:
+-- 
+-- prop> (a ⇒ b) ∧ a ≤ b
+-- prop> b ≤ a ⇒ a ∧ b
+-- prop> a ≤ b  iff a ⇒ b = ⊤
+-- prop> b ≤ b' then a ⇒ b ≤ a ⇒ b'
+-- prop> a'≤ a  then a' ⇒ b ≤ a ⇒ b
 class BoundedLattice a => HeytingAlgebra a where
   -- |
   -- Default implementation: @a ==> b = not a \/ b@, it requires @not@ to
@@ -163,20 +172,21 @@ instance (Eq a, Finite a, Hashable a) => HeytingAlgebra (HS.HashSet a) where
 instance (Ord k, Finite k, HeytingAlgebra v) => HeytingAlgebra (M.Map k v) where
   -- _xx__
   -- __yy_
-  -- T_iyT where i = x ==> y; T = top; _ missing (or removed key)
+  -- T_iTT where i = x ==> y; T = top; _ missing (or removed key)
   a ==> b =
     Merge.merge
-      Merge.dropMissing     -- drop @x@ if it is missing in @b@
-      Merge.preserveMissing -- preserve @y@ if it is missing @a@
-      (Merge.zipWithMatched (\_ -> (==>))) a b
-                            -- merge with @==>@ matching elements
+      Merge.dropMissing                    -- drop if an element is missing in @b@
+      (Merge.mapMissing (\_ _ -> top))     -- put @top@ if an element is missing in @a@
+      (Merge.zipWithMatched (\_ -> (==>))) -- merge  matching elements with @==>@
+      a b
+                            
     \/ M.fromList [(k, top) | k <- universe, not (M.member k a), not (M.member k b) ] 
                             -- for elements which are not in a, nor in b add
                             -- a @top@ key
 
 instance (Eq k, Finite k, Hashable k, HeytingAlgebra v) => HeytingAlgebra (HM.HashMap k v) where
   a ==> b = HM.intersectionWith (==>) a b
-    `HM.union` HM.difference b a
+    `HM.union` (HM.map (const top) $ HM.difference b a)
     `HM.union` HM.fromList [(k, top) | k <- universe, not (HM.member k a), not (HM.member k b)]
 
 --
@@ -205,25 +215,14 @@ prop_BoundedJoinSemiLattice a b c =
   .&&. counterexample "join order" (Join a `leq` Join (a \/ b))
 
 -- |
--- For all @a@: @_ /\ a@ is left adjoint to  @==> a@, i.e.  But rather than:
---
--- prop> Boolean (x /\ a meetLeq y) iff' Boolean (x meetLeq (a '==>' b))
---
--- it checks the equivalent:
---
--- prop> ((a ==> b) /\ a) meetLeq b
--- prop> b meetLeq (a ==> a /\ b)
+-- For all @a@: @_ /\ a@ is left adjoint to  @a ==>@
 prop_implies :: (HeytingAlgebra a, Eq a, Show a)
-             => a -> a -> Property
-prop_implies a b =
-       counterexample
-        ("(a ⇒ b) ∧ a NOT ≤ b"
-        ++ "\n a ⇒ b " ++ show (a ==> b))
-        (((a ==> b) /\ a) `meetLeq` b)
-  .&&. counterexample
-        ("b NOT ≤ (a ⇒ a ∧ b)"
-        ++ "\n a ⇒ a ∧ b " ++ show (a ==> a /\ b))
-        (b `meetLeq` (a ==> a /\ b))
+             => a -> a -> a -> Property
+prop_implies x a b =
+  (counterexample ("Failed: x ≤ (a ⇒ b) then x ∧ a ≤ b\n\ta ⇒ b = " ++ show (a ==> b)) $ (Meet x `leq` Meet (a ==> b)) QC.==> (Meet (x /\ a) `leq` Meet b))
+  .&&.
+  (counterexample ("Failed: x ∧ a ≤ b then x ≤ (a ⇒ b)\n\ta ⇒ b = " ++ show (a ==> b)) $ (Meet (x /\ a) `leq` Meet b) QC.==> (Meet x `leq` Meet (a ==> b)))
+
 
 -- |
 -- Usefull for testing valid instances of @'HeytingAlgebra'@ type class. It validates:
@@ -235,4 +234,4 @@ prop_HeytingAlgebra :: (HeytingAlgebra a, Eq a, Show a)
 prop_HeytingAlgebra a b c = 
        prop_BoundedJoinSemiLattice a b c
   .&&. prop_BoundedMeetSemiLattice a b c
-  .&&. prop_implies a b
+  .&&. prop_implies a b c
