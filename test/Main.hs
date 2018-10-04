@@ -21,6 +21,7 @@ import Test.QuickCheck
 
 import Algebra.Boolean
 import Algebra.Heyting
+import Algebra.Heyting.Layered
 
 import Test.Tasty
 import Test.Tasty.QuickCheck
@@ -89,6 +90,14 @@ instance Arbitrary S5 where
 instance (Arbitrary a, Ord a) => Arbitrary (Arb (S.Set a)) where
   arbitrary = Arb . S.fromList <$> arbitrary
   shrink (Arb as) = [ Arb (S.fromList as') | as' <- shrink (S.toList as) ]
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (Arb (Layered a b)) where
+  arbitrary = oneof
+    [ Arb . Lower <$> arbitrary
+    , Arb . Upper <$> arbitrary
+    ]
+  shrink (Arb (Lower a)) = [ Arb (Lower a') | a' <- shrink a ]
+  shrink (Arb (Upper b)) = [ Arb (Upper b') | b' <- shrink b ]
 
 -- Another arbitrary newtype wrapper; using tagged type let us avoid
 -- overlapping instances.
@@ -162,26 +171,27 @@ tests :: TestTree
 tests =
   testGroup "heyting-algebras tests"
     [ testGroup "BooleanAlgebra tests"
-        [ testProperty "BooleanAlgebra Bool" (prop_BooleanAlgebra @Bool)
-        , testProperty "BooleanAlgebra (Bool, Bool)" (prop_BooleanAlgebra @(Bool, Bool))
-        , testProperty "BooleanAlgebra Boolean (Lifted Bool)" (prop_BooleanAlgebra @(Boolean (Arb (Lifted Bool))))
+        [ testProperty "Bool"                  $ prop_BooleanAlgebra @Bool
+        , testProperty "(Bool, Bool)"          $ prop_BooleanAlgebra @(Bool, Bool)
+        , testProperty "Boolean (Lifted Bool)" $ prop_BooleanAlgebra @(Boolean (Arb (Lifted Bool)))
+        , testProperty "(Set S5)"              $ prop_BooleanAlgebra @(Arb (S.Set S5))
+        ]
+    , testGroup "Not BooleanAlgebra tests"
+        [ testProperty "Not BooleanAlgebra (Lifted Bool)"    $ expectFailure $ prop_not @(Arb (Lifted Bool))
+        , testProperty "Not BooleanAlgebra (Dropped Bool)"   $ expectFailure $ prop_not @(Arb (Dropped Bool))
+        , testProperty "Not BooleanAlgebra (Levitated Bool)" $ expectFailure $ prop_not @(Arb (Levitated Bool))
         ]
     , testGroup "HeytingAlgebra tests"
-        [ testProperty "HeytingAlgebra (Lifted Bool)" (prop_HeytingAlgebra @(Arb (Lifted Bool)))
-        , testProperty "Not BooleanAlgebra (Lifted Bool)" (expectFailure $ prop_not @(Arb (Lifted Bool)))
-
-        , testProperty "HeytingAlgebra (Dropped Bool)" (prop_HeytingAlgebra @(Arb (Dropped Bool)))
-        , testProperty "Not BooleanAlgebra (Dropped Bool)" (expectFailure $ prop_not @(Arb (Dropped Bool)))
-
-        , testProperty "HeytingAlgebra (Levitated Bool)" (prop_HeytingAlgebra @(Arb (Levitated Bool)))
-        , testProperty "Not BooleanAlgebra (Levitated Bool)" (expectFailure $ prop_not @(Arb (Levitated Bool)))
-
-        , testProperty "BooleanAlgebra (Set S5)" (prop_BooleanAlgebra @(Arb (S.Set S5)))
-        , testProperty "HeytingAlgebra (Map S5 Bool)" (prop_HeytingAlgebra @(Arb (M.Map S5 Bool)))
-
-        , testProperty "HeytingAlgebra (Dropped (Lifted Bool))" (prop_HeytingAlgebra @(Composed Dropped Lifted Bool))
-        , testProperty "HeytingAlgebra (Lifted (Dropped Bool))" (prop_HeytingAlgebra @(Composed Lifted Dropped Bool))
-        , testProperty "HeytingAlgebra (Lifted (Lifted Bool))" (prop_HeytingAlgebra @(Composed Lifted Lifted Bool))
-        , testProperty "HeytingAlgebra (Dropped (Dropped Bool))" (prop_HeytingAlgebra @(Composed Dropped Dropped Bool))
+        [ testProperty "Lifted Bool"            $ prop_HeytingAlgebra @(Arb (Lifted Bool))
+        , testProperty "Dropped Bool"           $ prop_HeytingAlgebra @(Arb (Dropped Bool))
+        , testProperty "Layered Bool Bool"      $ prop_HeytingAlgebra @(Arb (Layered Bool Bool))
+        , testProperty "Levitated Bool"         $ prop_HeytingAlgebra @(Arb (Levitated Bool))
+        , testProperty "Sum (Lifted Bool) (Dropped Bool)"
+                                                $ prop_HeytingAlgebra @(Arb (Layered (Arb (Lifted Bool)) (Arb (Dropped Bool))))
+        , testProperty "Map S5 Bool"            $ prop_HeytingAlgebra @(Arb (M.Map S5 Bool))
+        , testProperty "Dropped (Lifted Bool)"  $ prop_HeytingAlgebra @(Composed Dropped Lifted Bool)
+        , testProperty "Lifted (Dropped Bool)"  $ prop_HeytingAlgebra @(Composed Lifted Dropped Bool)
+        , testProperty "Lifted (Lifted Bool)"   $ prop_HeytingAlgebra @(Composed Lifted Lifted Bool)
+        , testProperty "Dropped (Dropped Bool)" $ prop_HeytingAlgebra @(Composed Dropped Dropped Bool)
         ]
     ]

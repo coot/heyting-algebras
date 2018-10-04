@@ -16,6 +16,7 @@ tested-with:         GHC==8.2.2, GHC==8.4.3
 library
   exposed-modules:     Algebra.Heyting
                        Algebra.Heyting.Free
+                       Algebra.Heyting.Layered
                        Algebra.Boolean
                        Algebra.Boolean.Free
   -- other-modules:
