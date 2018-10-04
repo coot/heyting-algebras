@@ -33,8 +33,7 @@ import Algebra.Lattice ( BoundedJoinSemiLattice (..)
                        , BoundedMeetSemiLattice (..)
                        , BoundedLattice
                        , Meet (..)
-                       , meetLeq
-                       , joinLeq
+                       , Join (..)
                        , (/\)
                        , (\/)
                        )
@@ -42,7 +41,7 @@ import Algebra.Lattice.Dropped (Dropped (..))
 import Algebra.Lattice.Lifted (Lifted (..))
 import Algebra.Lattice.Levitated (Levitated)
 import qualified Algebra.Lattice.Levitated as L
-import Algebra.PartialOrd (leq, partialOrdEq)
+import Algebra.PartialOrd (leq)
 import Test.QuickCheck hiding ((==>))
 
 -- |
@@ -129,8 +128,8 @@ instance (HeytingAlgebra a, HeytingAlgebra b) => HeytingAlgebra (a, b) where
 --
 
 instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Dropped a) where
-  (Drop a) ==> (Drop b) | Meet a `partialOrdEq` Meet b = Top
-                        | otherwise                    = Drop (a ==> b)
+  (Drop a) ==> (Drop b) | Meet a `leq` Meet b = Top
+                        | otherwise           = Drop (a ==> b)
   Top      ==> a        = a
   _        ==> Top      = Top
 
@@ -140,10 +139,8 @@ instance HeytingAlgebra a => HeytingAlgebra (Lifted a) where
   _        ==> Bottom   = Bottom
 
 instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Levitated a) where
-  (L.Levitate a) ==> (L.Levitate b) | Meet a `partialOrdEq` Meet b
-                                    = L.Top
-                                    | otherwise
-                                    = L.Levitate (a ==> b)
+  (L.Levitate a) ==> (L.Levitate b) | Meet a `leq` Meet b = L.Top
+                                    | otherwise           = L.Levitate (a ==> b)
   L.Top          ==> a              = a
   _              ==> L.Top          = L.Top
   L.Bottom       ==> _              = L.Top
@@ -195,7 +192,7 @@ prop_BoundedMeetSemiLattice a b c =
   .&&. counterexample "meet commutativity" ((a /\ b) === (b /\ a))
   .&&. counterexample "meet idempotent" ((a /\ a) === a)
   .&&. counterexample "meet identity" ((top /\ a) === a)
-  .&&. counterexample "meet order" ((a /\ b) `meetLeq` a)
+  .&&. counterexample "meet order" (Meet (a /\ b) `leq` Meet a)
 
 -- |
 -- Verfifies if bounded join semilattice laws.
@@ -205,7 +202,7 @@ prop_BoundedJoinSemiLattice a b c =
   .&&. counterexample "join commutativity" ((a \/ b) === (b \/ a))
   .&&. counterexample "join idempotent" ((a \/ a) === a)
   .&&. counterexample "join identity" ((bottom \/ a) === a)
-  .&&. counterexample "join order" (a `joinLeq` (a \/ b))
+  .&&. counterexample "join order" (Join a `leq` Join (a \/ b))
 
 -- |
 -- For all @a@: @_ /\ a@ is left adjoint to  @==> a@, i.e.  But rather than:
