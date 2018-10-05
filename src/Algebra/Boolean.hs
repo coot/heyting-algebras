@@ -130,7 +130,7 @@ instance (Ord a, Finite a) => BooleanAlgebra (S.Set a)
 
 -- |
 -- Test that @'not'@ satisfies Boolean algebra axioms.
-prop_not :: (BooleanAlgebra a, Eq a, Show a) => a -> Property
+prop_not :: (HeytingAlgebra a, Eq a, Show a) => a -> Property
 prop_not a =
        counterexample "not (not a) /= a" (not (not a) === a)
   .&&. counterexample "not a ∧ a /= bottom" (not a /\ a === bottom)
