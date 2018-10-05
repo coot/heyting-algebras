@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -13,6 +14,7 @@ module Algebra.Boolean
   , boolean
 
     -- * Properties
+    -- $properties
   , prop_not 
   , prop_BooleanAlgebra
   ) where
@@ -28,7 +30,9 @@ import Data.Tagged            (Tagged (..))
 import Data.Universe.Class    (Finite)
 import qualified Data.Set as S
 import GHC.Generics          (Generic)
+#ifdef EXPORT_PROPERTIES
 import Test.QuickCheck hiding ((==>))
+#endif
 
 import Algebra.Lattice ( Lattice
                        , BoundedLattice
@@ -125,8 +129,10 @@ instance (BooleanAlgebra a, BooleanAlgebra b) => BooleanAlgebra (a, b)
 instance (Ord a, Finite a) => BooleanAlgebra (S.Set a)
 
 -- 
--- Properties
+-- $properties
 --
+-- /Properties are exported only if @export-properties@ cabal flag is defined./
+#ifdef EXPORT_PROPERTIES
 
 -- |
 -- Test that @'not'@ satisfies Boolean algebra axioms.
@@ -144,3 +150,4 @@ prop_BooleanAlgebra :: (BooleanAlgebra a, Eq a, Show a)
 prop_BooleanAlgebra a b c =
        prop_HeytingAlgebra a b c
   .&&. prop_not a
+#endif

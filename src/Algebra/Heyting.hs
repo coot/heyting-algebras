@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP                        #-}
+{-# LANGUAGE CPP #-}
 module Algebra.Heyting
   ( HeytingAlgebra (..)
   , iff
@@ -6,6 +6,8 @@ module Algebra.Heyting
   , toBoolean
 
     -- * Properties
+    --
+    -- $properties
   , prop_BoundedMeetSemiLattice
   , prop_BoundedJoinSemiLattice
   , prop_HeytingAlgebra
@@ -44,8 +46,10 @@ import Algebra.Lattice.Lifted (Lifted (..))
 import Algebra.Lattice.Levitated (Levitated)
 import qualified Algebra.Lattice.Levitated as L
 import Algebra.PartialOrd (leq)
+#ifdef EXPORT_PROPERTIES
 import Test.QuickCheck hiding ((==>))
 import qualified Test.QuickCheck as QC
+#endif
 
 -- |
 -- Heyting algebra is a bounded semi-lattice with implication which should
@@ -199,11 +203,13 @@ instance (Eq k, Finite k, Hashable k, HeytingAlgebra v) => HeytingAlgebra (HM.Ha
     `HM.union` HM.fromList [(k, top) | k <- universe, not (HM.member k a), not (HM.member k b)]
 
 --
--- Properties
+-- $properties
 --
+-- /Properties are exported only if @export-properties@ cabal flag is defined./
+#ifdef EXPORT_PROPERTIES
 
 -- |
--- Verfifies if bounded meet semilattice laws.
+-- Verfifies bounded meet semilattice laws.
 prop_BoundedMeetSemiLattice :: (BoundedMeetSemiLattice a, Eq a, Show a)
                             => a -> a -> a -> Property
 prop_BoundedMeetSemiLattice a b c =
@@ -214,7 +220,7 @@ prop_BoundedMeetSemiLattice a b c =
   .&&. counterexample "meet order" (Meet (a /\ b) `leq` Meet a)
 
 -- |
--- Verfifies if bounded join semilattice laws.
+-- Verfifies bounded join semilattice laws.
 prop_BoundedJoinSemiLattice :: (BoundedJoinSemiLattice a, Eq a, Show a) => a -> a -> a -> Property
 prop_BoundedJoinSemiLattice a b c =
        counterexample "join associativity" ((a \/ (b \/ c)) === ((a \/ b) \/ c))
@@ -224,7 +230,8 @@ prop_BoundedJoinSemiLattice a b c =
   .&&. counterexample "join order" (Join a `leq` Join (a \/ b))
 
 -- |
--- For all @a@: @_ /\ a@ is left adjoint to  @a ==>@
+-- Verifies the Heyting algebra law for @==>@:
+-- for all @a@: @_ /\ a@ is left adjoint to  @a ==>@
 prop_implies :: (HeytingAlgebra a, Eq a, Show a)
              => a -> a -> a -> Property
 prop_implies x a b =
@@ -236,7 +243,8 @@ prop_implies x a b =
 
 
 -- |
--- Usefull for testing valid instances of @'HeytingAlgebra'@ type class. It validates:
+-- Usefull for testing valid instances of @'HeytingAlgebra'@ type class. It
+-- validates:
 --
 -- * bounded lattice laws
 -- * @'prop_implies'@
@@ -246,3 +254,4 @@ prop_HeytingAlgebra a b c =
        prop_BoundedJoinSemiLattice a b c
   .&&. prop_BoundedMeetSemiLattice a b c
   .&&. prop_implies a b c
+#endif
