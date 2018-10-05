@@ -12,6 +12,21 @@ let
       in {
         haskell = super.haskell // {
           packages = super.haskell.packages // {
+            ghc861 = super.haskell.packages.ghc861.override {
+              overrides = self: super: {
+                free-algebras = super.callPackage ./free-algebras-0.0.5.0.nix {};
+              };
+            };
+            ghc843 = super.haskell.packages.ghc843.override {
+              overrides = self: super: {
+                free-algebras = super.callPackage ./free-algebras-0.0.5.0.nix {};
+              };
+            };
+            ghc822 = super.haskell.packages.ghc822.override {
+              overrides = self: super: {
+                free-algebras = super.callPackage ./free-algebras-0.0.5.0.nix {};
+              };
+            };
             ghc802 = super.haskell.packages.ghc802.override {
               overrides = self: super: {
                 concurrent-output = super.callPackage ./concurrent-output-1.9.2.nix {};
@@ -19,6 +34,7 @@ let
                 async = super.callPackage ./async-2.1.1.1.nix {};
                 lifted-async = super.callPackage ./lifted-async-0.9.3.3.nix {};
                 exceptions = super.callPackage ./exceptions-0.8.3.nix {};
+                free-algebras = super.callPackage ./free-algebras-0.0.5.0.nix {};
               };
             };
           };

@@ -4,11 +4,11 @@
 }:
 mkDerivation {
   pname = "free-algebras";
-  version = "0.0.4.0";
+  version = "0.0.5.0";
   src = fetchgit {
     url = "https://github.com/coot/free-algebras";
-    sha256 = "1g6qvspnm4vkf7sy724gf1394lgvfdg51ba8z1a5a8q7d3a8gx6i";
-    rev = "fb95354da9a25fe4f30b063c1e9578868d356da5";
+    sha256 = "1c8ac0iq7lkxacbpww1dqrmla4mxlpkgszsqn3ddd6gk6kiykrrm";
+    rev = "efda0f2a21825070d2e57b06c7c0f4d004abe4e8";
     fetchSubmodules = true;
   };
   libraryHaskellDepends = [

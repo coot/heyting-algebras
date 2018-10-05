@@ -2,6 +2,7 @@
 , haddock ? true
 , test ? true
 , benchmarks ? false
+, export-properties ? true
 }:
 with builtins;
 let
@@ -9,7 +10,7 @@ let
   lib = nixpkgs.haskell.lib;
   callPackage = nixpkgs.haskell.packages.${compiler}.callPackage;
 
-  free-algebras = callPackage ./nix/free-algebras.nix {};
+  export-properties' = if test then true else export-properties;
 
   doHaddock = if haddock
     then lib.doHaddock
@@ -20,10 +21,13 @@ let
   doBench = if benchmarks
     then lib.doBenchmark
     else nixpkgs.lib.id;
+  doExportProperties = pkg: if export-properties'
+    then lib.enableCabalFlag pkg "export-properties"
+    else pkg;
 
-  heyting-algebras = lib.enableCabalFlag (doHaddock(doTest(doBench(
+  heyting-algebras = doExportProperties(doHaddock(doTest(doBench(
     callPackage ./pkg.nix {
-      inherit nixpkgs free-algebras;
-    })))) "test-with-cabal";
+      inherit nixpkgs;
+    }))));
 
 in { inherit heyting-algebras; }
