@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP                        #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Algebra.Heyting
   ( HeytingAlgebra (..)
   , iff
@@ -190,13 +189,13 @@ instance (Ord k, Finite k, HeytingAlgebra v) => HeytingAlgebra (M.Map k v) where
 #else
   a ==> b =
     M.intersectionWith (==>) a b
-      `M.union` (M.map (const top) $ M.difference b a)
+      `M.union` M.map (const top) (M.difference b a)
       `M.union` M.fromList [(k, top) | k <- universe, not (M.member k a), not (M.member k b)]
 #endif
 
 instance (Eq k, Finite k, Hashable k, HeytingAlgebra v) => HeytingAlgebra (HM.HashMap k v) where
   a ==> b = HM.intersectionWith (==>) a b
-    `HM.union` (HM.map (const top) $ HM.difference b a)
+    `HM.union` HM.map (const top) (HM.difference b a)
     `HM.union` HM.fromList [(k, top) | k <- universe, not (HM.member k a), not (HM.member k b)]
 
 --
@@ -229,9 +228,11 @@ prop_BoundedJoinSemiLattice a b c =
 prop_implies :: (HeytingAlgebra a, Eq a, Show a)
              => a -> a -> a -> Property
 prop_implies x a b =
-  (counterexample ("Failed: x ≤ (a ⇒ b) then x ∧ a ≤ b\n\ta ⇒ b = " ++ show (a ==> b)) $ (Meet x `leq` Meet (a ==> b)) QC.==> (Meet (x /\ a) `leq` Meet b))
+  counterexample ("Failed: x ≤ (a ⇒ b) then x ∧ a ≤ b\n\ta ⇒ b = " ++ show (a ==> b))
+    (Meet x `leq` Meet (a ==> b) QC.==> (Meet (x /\ a) `leq` Meet b))
   .&&.
-  (counterexample ("Failed: x ∧ a ≤ b then x ≤ (a ⇒ b)\n\ta ⇒ b = " ++ show (a ==> b)) $ (Meet (x /\ a) `leq` Meet b) QC.==> (Meet x `leq` Meet (a ==> b)))
+  counterexample ("Failed: x ∧ a ≤ b then x ≤ (a ⇒ b)\n\ta ⇒ b = " ++ show (a ==> b))
+    (Meet (x /\ a) `leq` Meet b QC.==> (Meet x `leq` Meet (a ==> b)))
 
 
 -- |
