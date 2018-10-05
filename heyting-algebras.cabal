@@ -1,7 +1,9 @@
 name:                heyting-algebras
 version:             0.0.1.0
 synopsis:            Heyting and Boolean algebras
--- description:
+description:
+  This package provides Heyting and Boolean operations together
+  with various constructions of Heyting algebras.
 license:             MPL-2.0
 license-file:        LICENSE
 author:              Marcin Szamotulski
