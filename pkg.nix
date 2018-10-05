@@ -1,7 +1,7 @@
 { mkDerivation, base, free-algebras, lattices, QuickCheck, tagged, tasty, tasty-quickcheck, nixpkgs, stdenv }:
 mkDerivation {
   pname = "heyting-algebras";
-  version = "0.0.1.0";
+  version = "0.0.1.1";
   src = nixpkgs.lib.sourceFilesBySuffices ./.
     [ ".hs" "LICENSE" "ChangeLog.md" "heyting-algebras.cabal" ];
   libraryHaskellDepends = [ base free-algebras lattices QuickCheck tagged ];

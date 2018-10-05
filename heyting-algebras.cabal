@@ -1,5 +1,5 @@
 name:                heyting-algebras
-version:             0.0.1.0
+version:             0.0.1.1
 synopsis:            Heyting and Boolean algebras
 description:
   This package provides Heyting and Boolean operations together
@@ -19,8 +19,8 @@ flag export-properties
   description:
     Export quickcheck properties from library; this adds QuickCheck
     as a dependency.
-  manual: True
-  default: False
+  manual: False
+  default: True
 
 library
   exposed-modules:     Algebra.Heyting
