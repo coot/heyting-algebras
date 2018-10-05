@@ -13,18 +13,17 @@ import Algebra.Lattice.Dropped (Dropped (..))
 import Algebra.Lattice.Lifted (Lifted (..))
 import Algebra.Lattice.Levitated (Levitated)
 import qualified Algebra.Lattice.Levitated as L
+import Algebra.Lattice.Ordered (Ordered (..))
 import Data.Universe.Class (Universe (..), Finite)
 import qualified Data.Set as S
 import qualified Data.Map as M
-
-import Test.QuickCheck
 
 import Algebra.Boolean
 import Algebra.Heyting
 import Algebra.Heyting.Layered
 
 import Test.Tasty
-import Test.Tasty.QuickCheck
+import Test.Tasty.QuickCheck hiding (Ordered)
 
 -- | Arbitrary wrapper
 newtype Arb a = Arb a
@@ -75,6 +74,10 @@ instance Arbitrary a => Arbitrary (Arb (Levitated a)) where
     : Arb L.Top
     : [ Arb (L.Levitate a') | a' <- shrink a ]
   shrink (Arb L.Top) = []
+
+instance Arbitrary a => Arbitrary (Arb (Ordered a)) where
+  arbitrary = Arb . Ordered <$> arbitrary
+  shrink (Arb (Ordered a)) = [ Arb (Ordered a') | a' <- shrink a ]
 
 data S5 = S1 | S2 | S3 | S4 | S5
   deriving (Ord, Eq, Show)
@@ -170,24 +173,25 @@ main = defaultMain tests
 tests :: TestTree
 tests =
   testGroup "heyting-algebras tests"
-    [ testGroup "BooleanAlgebra tests"
+    [ testGroup "Boolean algebras"
         [ testProperty "Bool"                  $ prop_BooleanAlgebra @Bool
         , testProperty "(Bool, Bool)"          $ prop_BooleanAlgebra @(Bool, Bool)
         , testProperty "Boolean (Lifted Bool)" $ prop_BooleanAlgebra @(Boolean (Arb (Lifted Bool)))
         , testProperty "(Set S5)"              $ prop_BooleanAlgebra @(Arb (S.Set S5))
         ]
-    , testGroup "Not BooleanAlgebra tests"
-        [ testProperty "Not BooleanAlgebra (Lifted Bool)"    $ expectFailure $ prop_not @(Arb (Lifted Bool))
-        , testProperty "Not BooleanAlgebra (Dropped Bool)"   $ expectFailure $ prop_not @(Arb (Dropped Bool))
-        , testProperty "Not BooleanAlgebra (Levitated Bool)" $ expectFailure $ prop_not @(Arb (Levitated Bool))
+    , testGroup "Non Boolean algebras"
+        [ testProperty "Not a BooleanAlgebra (Lifted Bool)"    $ expectFailure $ prop_not @(Arb (Lifted Bool))
+        , testProperty "Not a BooleanAlgebra (Dropped Bool)"   $ expectFailure $ prop_not @(Arb (Dropped Bool))
+        , testProperty "Not a BooleanAlgebra Levitated (Ordered Int)" $ expectFailure $ prop_BooleanAlgebra @(Arb (Levitated (Arb (Ordered Int))))
         ]
-    , testGroup "HeytingAlgebra tests"
+    , testGroup "Heyting algebras"
         [ testProperty "Lifted Bool"            $ prop_HeytingAlgebra @(Arb (Lifted Bool))
         , testProperty "Dropped Bool"           $ prop_HeytingAlgebra @(Arb (Dropped Bool))
         , testProperty "Layered Bool Bool"      $ prop_HeytingAlgebra @(Arb (Layered Bool Bool))
         , testProperty "Levitated Bool"         $ prop_HeytingAlgebra @(Arb (Levitated Bool))
         , testProperty "Sum (Lifted Bool) (Dropped Bool)"
                                                 $ prop_HeytingAlgebra @(Arb (Layered (Arb (Lifted Bool)) (Arb (Dropped Bool))))
+        , testProperty "Levitated (Ordered Int)" $ prop_HeytingAlgebra @(Arb (Levitated (Arb (Ordered Int))))
         , testProperty "Map S5 Bool"            $ prop_HeytingAlgebra @(Arb (M.Map S5 Bool))
         , testProperty "Dropped (Lifted Bool)"  $ prop_HeytingAlgebra @(Composed Dropped Lifted Bool)
         , testProperty "Lifted (Dropped Bool)"  $ prop_HeytingAlgebra @(Composed Lifted Dropped Bool)

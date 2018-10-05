@@ -45,9 +45,10 @@ import Algebra.Lattice.Dropped (Dropped (..))
 import Algebra.Lattice.Lifted (Lifted (..))
 import Algebra.Lattice.Levitated (Levitated)
 import qualified Algebra.Lattice.Levitated as L
+import Algebra.Lattice.Ordered (Ordered (..))
 import Algebra.PartialOrd (leq)
 #ifdef EXPORT_PROPERTIES
-import Test.QuickCheck hiding ((==>))
+import Test.QuickCheck hiding (Ordered, (==>))
 import qualified Test.QuickCheck as QC
 #endif
 
@@ -139,7 +140,7 @@ instance (HeytingAlgebra a, HeytingAlgebra b) => HeytingAlgebra (a, b) where
   (a0, b0) ==> (a1, b1) = (a0 ==> a1, b0 ==> b1)
 
 --
--- Dropped, Lifted, Levitated
+-- Dropped, Lifted, Levitated, Ordered
 --
 
 instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Dropped a) where
@@ -160,6 +161,10 @@ instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Levitated a) where
   _              ==> L.Top          = L.Top
   L.Bottom       ==> _              = L.Top
   _              ==> L.Bottom       = L.Bottom
+
+instance (Ord a, Bounded a) => HeytingAlgebra (Ordered a) where
+  Ordered a ==> Ordered b | a <= b    = top
+                          | otherwise = Ordered b
 
 --
 -- containers
