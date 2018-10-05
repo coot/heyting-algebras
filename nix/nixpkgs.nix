@@ -14,12 +14,9 @@ let
           packages = super.haskell.packages // {
             ghc802 = super.haskell.packages.ghc802.override {
               overrides = self: super: {
-                ansi-terminal = super.callPackage ./ansi-terminal-0.6.3.1.nix {};
-                async = super.callPackage ./async-2.1.1.1.nix {};
-                lifted-async = super.callPackage ./lifted-async-0.9.3.3.nix {};
-                exceptions = super.callPackage ./exceptions-0.8.3.nix {};
-                stm = super.callPackage ./stm-2.4.5.1.nix {};
-                concurrent-output = super.callPackage ./concurrent-output-1.9.2.nix {};
+                # hedgehog = super.callPackage ./hedgehog-0.6.1.nix {};
+                semigroupoids = super.semigroupoids_5_3_1;
+                base-orphans = super.base-orphans_0_8;
               };
             };
           };

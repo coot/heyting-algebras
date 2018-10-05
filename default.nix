@@ -9,8 +9,7 @@ let
   lib = nixpkgs.haskell.lib;
   callPackage = nixpkgs.haskell.packages.${compiler}.callPackage;
 
-  lattices = callPackage ./nix/lattices.nix { };
-  free-algebras = callPackage ./nix/free-algebras.nix { };
+  free-algebras = callPackage ./nix/free-algebras.nix {};
 
   doHaddock = if haddock
     then lib.doHaddock
@@ -24,7 +23,7 @@ let
 
   heyting-algebras = lib.enableCabalFlag (doHaddock(doTest(doBench(
     callPackage ./pkg.nix {
-      inherit nixpkgs lattices free-algebras;
+      inherit nixpkgs free-algebras;
     })))) "test-with-cabal";
 
 in { inherit heyting-algebras; }
