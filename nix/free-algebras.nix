@@ -7,8 +7,8 @@ mkDerivation {
   version = "0.0.4.0";
   src = fetchgit {
     url = "https://github.com/coot/free-algebras";
-    sha256 = "1jifmixil2zkpzhd9p6xc5h40bg9ih2b04hq4zcmhav3y7ihn6d0";
-    rev = "66b8294c970c6f1a468733c6b2b029c6f86e7fa3";
+    sha256 = "1g6qvspnm4vkf7sy724gf1394lgvfdg51ba8z1a5a8q7d3a8gx6i";
+    rev = "fb95354da9a25fe4f30b063c1e9578868d356da5";
     fetchSubmodules = true;
   };
   libraryHaskellDepends = [

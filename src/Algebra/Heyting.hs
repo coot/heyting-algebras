@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Algebra.Heyting
   ( HeytingAlgebra (..)
@@ -24,7 +25,9 @@ import Data.Semigroup         (All (..), Any (..), Endo (..))
 import Data.Tagged            (Tagged (..))
 import Data.Universe.Class    (Finite, universe)
 import qualified Data.Map as M
+#if __GLASGOW_HASKELL__ >= 822
 import qualified Data.Map.Merge.Lazy as Merge
+#endif
 import qualified Data.Set as S
 import qualified Data.HashMap.Lazy as HM
 import qualified Data.HashSet      as HS
@@ -173,6 +176,7 @@ instance (Ord k, Finite k, HeytingAlgebra v) => HeytingAlgebra (M.Map k v) where
   -- _xx__
   -- __yy_
   -- T_iTT where i = x ==> y; T = top; _ missing (or removed key)
+#if __GLASOW_HASKELL__ >= 822
   a ==> b =
     Merge.merge
       Merge.dropMissing                    -- drop if an element is missing in @b@
@@ -183,6 +187,12 @@ instance (Ord k, Finite k, HeytingAlgebra v) => HeytingAlgebra (M.Map k v) where
     \/ M.fromList [(k, top) | k <- universe, not (M.member k a), not (M.member k b) ] 
                             -- for elements which are not in a, nor in b add
                             -- a @top@ key
+#else
+  a ==> b =
+    M.intersectionWith (==>) a b
+      `M.union` (M.map (const top) $ M.difference b a)
+      `M.union` M.fromList [(k, top) | k <- universe, not (M.member k a), not (M.member k b)]
+#endif
 
 instance (Eq k, Finite k, Hashable k, HeytingAlgebra v) => HeytingAlgebra (HM.HashMap k v) where
   a ==> b = HM.intersectionWith (==>) a b
