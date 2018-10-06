@@ -5,7 +5,7 @@ module Algebra.Heyting
   , iff'
   , toBoolean
 
-    -- * Properties
+    -- * QuickCheck Properties
     --
     -- $properties
   , prop_BoundedMeetSemiLattice
@@ -71,6 +71,8 @@ import qualified Test.QuickCheck as QC
 -- prop> a ≤ b  iff a ⇒ b = ⊤
 -- prop> b ≤ b' then a ⇒ b ≤ a ⇒ b'
 -- prop> a'≤ a  then a' ⇒ b ≤ a ⇒ b
+-- prop> not (a ∧ b) = not (a ∨ b)
+-- prop> not (a ∨ b) = not a ∧ not b
 class BoundedLattice a => HeytingAlgebra a where
   -- |
   -- Default implementation: @a ==> b = not a \/ b@, it requires @not@ to

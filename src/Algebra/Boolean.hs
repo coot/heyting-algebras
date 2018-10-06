@@ -13,7 +13,7 @@ module Algebra.Boolean
   , runBoolean
   , boolean
 
-    -- * Properties
+    -- * QuickCheck Properties
     -- $properties
   , prop_not 
   , prop_BooleanAlgebra
