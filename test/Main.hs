@@ -182,7 +182,7 @@ tests =
     , testGroup "Non Boolean algebras"
         [ testProperty "Not a BooleanAlgebra (Lifted Bool)"    $ expectFailure $ prop_not @(Arb (Lifted Bool))
         , testProperty "Not a BooleanAlgebra (Dropped Bool)"   $ expectFailure $ prop_not @(Arb (Dropped Bool))
-        , testProperty "Not a BooleanAlgebra Levitated (Ordered Int)" $ expectFailure $ prop_BooleanAlgebra @(Arb (Levitated (Arb (Ordered Int))))
+        , testProperty "Not a BooleanAlgebra Levitated (Ordered Int)" $ expectFailure $ prop_not @(Arb (Levitated (Arb (Ordered Int))))
         ]
     , testGroup "Heyting algebras"
         [ testProperty "Lifted Bool"            $ prop_HeytingAlgebra @(Arb (Lifted Bool))
