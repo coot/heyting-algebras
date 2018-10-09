@@ -9,6 +9,12 @@ which are in the Haskell eco-system.  It is build on top of
 combinators for free Heyting algebras).  The package also defines a type class
 for Boolean algebras and comes with a handful of instances.
 
+A note about notation: this package is based on
+[lattices](https://hackage.haskell.org/package/lattices), and both are using
+notation and names common in lattice theory and logic.  Where `&&` becomes `∧`
+and is called `meet` and `||` is denoted by `∨` and is usually called as
+`join`.  The `lattice` package provides `\/` and `/\` operators.
+
 A very good introduction to Heyting algebras can be found at
 [ncatlab](https://ncatlab.org/nlab/show/Heyting%2Balgebra).  Heyting algebras
 are the crux of [intuitionistic
@@ -17,12 +23,13 @@ axiom of exluded middle.  From categorical point of view, Heyting algebras are
 posets (categories with at most one arrow between any objects), which are also
 Cartesian closed (and finitely (co-)complete).  Note that this makes any
 Heyting algebra a simply typed lambda calculus; hence one more incentive to
-learn how to use them.
+learn how to use them.  For example currying holds in Heyting algebras: `a =>
+(b ⇒ c)` is equal to `(a ∧ b) ⇒ c`
 
 The most important operation is implication `(==>) :: HeytingAlgebra a => a ->
-a -> a`; since every Boolean algebra is a Heyting algebra via `a ==>
-b = not a \/ b` (using the lattice notation for `or`).  It is very handy in
-expression conditional logic.
+a -> a` (whcih we might also write as ⇒ in documentation); since every Boolean
+algebra is a Heyting algebra via `a ==> b = not a \/ b` (using the lattice
+notation for `or`).  It is very handy in expression conditional logic.
 
 Some basic examples of Heyting algebras:
 * `Bool` is a Boolean algebra

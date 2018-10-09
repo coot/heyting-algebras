@@ -63,8 +63,12 @@ import qualified Test.QuickCheck as QC
 -- which makes any Heyting algebra
 -- a [cartesian
 -- closed category](https://ncatlab.org/nlab/show/cartesian%2Bclosed%2Bcategory).
+-- This means that Curry isomorphism holds (which takes a form of an actual
+-- equality):
 --
--- Some useful properties of Heyting algebras:
+-- prop> a ⇒ (b ⇒ c) = (a ∧ b) ⇒ c
+--
+-- Some other useful properties of Heyting algebras:
 -- 
 -- prop> (a ⇒ b) ∧ a ≤ b
 -- prop> b ≤ a ⇒ a ∧ b
