@@ -10,6 +10,7 @@ module Algebra.Heyting
     -- $properties
   , prop_BoundedMeetSemiLattice
   , prop_BoundedJoinSemiLattice
+  , prop_DistributiveLattice
   , prop_HeytingAlgebra
   , prop_implies
   )
@@ -37,6 +38,7 @@ import qualified Data.HashSet      as HS
 import Algebra.Lattice ( BoundedJoinSemiLattice (..)
                        , BoundedMeetSemiLattice (..)
                        , BoundedLattice
+                       , Lattice
                        , Meet (..)
                        , Join (..)
                        , (/\)
@@ -58,6 +60,12 @@ import qualified Test.QuickCheck as QC
 -- satisfy the following law:
 --
 -- prop> x ∧ a ≤ b ⇔ x ≤ (a ⇒ b)
+--
+-- We also require that a Heyting algebra is a distributive lattice, which
+-- means any of the two equialent conditions holds:
+--
+-- prop> a ∧ (b ∨ c) = a ∧ b ∨ a ∧ c
+-- prop> a ∨ (b ∧ c) = (a ∨ b) ∧ (a ∨ c)
 --
 -- This means @a ⇒ b@ is an
 -- [exponential object](https://ncatlab.org/nlab/show/exponential%2Bobject),
@@ -150,6 +158,8 @@ instance (HeytingAlgebra a, HeytingAlgebra b) => HeytingAlgebra (a, b) where
 -- Dropped, Lifted, Levitated, Ordered
 --
 
+-- |
+-- Subdirectly irreducible Heyting algebra.
 instance (Eq a, HeytingAlgebra a) => HeytingAlgebra (Dropped a) where
   (Drop a) ==> (Drop b) | Meet a `leq` Meet b = Top
                         | otherwise           = Drop (a ==> b)
@@ -256,6 +266,17 @@ prop_BoundedJoinSemiLattice (Blind a) (Blind b) (Blind c) =
         (Join a `leq` Join (a \/ b))
 
 -- |
+-- Distributivity laws for a lattice.
+prop_DistributiveLattice :: (Lattice a, Eq a, Show a)
+                         => a -> a -> a -> Property
+prop_DistributiveLattice a b c =
+       counterexample "a ∧ (b ∨ c) ≠ a ∧ b ∨ a ∧ c"
+        ((a /\ (b \/ c)) === ((a /\ b) \/ (a /\ c)))
+  .&&.
+       counterexample "a ∨ (b ∧ c) ≠ (a ∨ b) ∧ (a ∨ c)"
+        ((a \/ (b /\ c)) === ((a \/ b) /\ (a \/ c)))
+
+-- |
 -- Verifies the Heyting algebra law for @==>@:
 -- for all @a@: @_ /\ a@ is left adjoint to  @a ==>@
 -- and some other properties that are a consequence of that.
@@ -298,5 +319,6 @@ prop_HeytingAlgebra :: (HeytingAlgebra a, Eq a, Show a)
 prop_HeytingAlgebra (Blind a) (Blind b) (Blind c) = 
        prop_BoundedJoinSemiLattice (Blind a) (Blind b) (Blind c)
   .&&. prop_BoundedMeetSemiLattice (Blind a) (Blind b) (Blind c)
+  .&&. prop_DistributiveLattice a b c
   .&&. prop_implies (Blind a) (Blind b) (Blind c)
 #endif
