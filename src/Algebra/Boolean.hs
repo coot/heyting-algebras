@@ -31,7 +31,7 @@ import Data.Universe.Class    (Finite)
 import qualified Data.Set as S
 import GHC.Generics          (Generic)
 #ifdef EXPORT_PROPERTIES
-import Test.QuickCheck hiding ((==>))
+import Test.QuickCheck        (Blind (..), Property, counterexample, (.&&.), (===))
 #endif
 
 import Algebra.Lattice ( Lattice
@@ -85,11 +85,6 @@ newtype Boolean a = Boolean
     )
 
 instance HeytingAlgebra a => BooleanAlgebra (Boolean a)
-
--- TODO: move to tests
-instance (Arbitrary a, HeytingAlgebra a) => Arbitrary (Boolean a) where
-  arbitrary = boolean <$> arbitrary
-  shrink (Boolean a) = [ boolean a' | a' <- shrink a ]
 
 -- |
 -- Smart constructro of the @'Boolean'@ type.
@@ -148,6 +143,6 @@ prop_not a =
 prop_BooleanAlgebra :: (BooleanAlgebra a, Eq a, Show a)
                     => a -> a -> a -> Property
 prop_BooleanAlgebra a b c =
-       prop_HeytingAlgebra a b c
+       prop_HeytingAlgebra (Blind a) (Blind b) (Blind c)
   .&&. prop_not a
 #endif

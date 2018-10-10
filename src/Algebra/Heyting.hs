@@ -19,6 +19,7 @@ import Prelude hiding (not)
 import qualified Prelude
 
 import Control.Applicative    (Const (..))
+import Data.List              (intersperse)
 import Data.Functor.Identity  (Identity (..))
 import Data.Hashable          (Hashable)
 import Data.Proxy             (Proxy (..))
@@ -41,14 +42,14 @@ import Algebra.Lattice ( BoundedJoinSemiLattice (..)
                        , (/\)
                        , (\/)
                        )
-import Algebra.Lattice.Dropped (Dropped (..))
-import Algebra.Lattice.Lifted (Lifted (..))
-import Algebra.Lattice.Levitated (Levitated)
+import Algebra.Lattice.Dropped    (Dropped    ( ..))
+import Algebra.Lattice.Lifted     (Lifted     ( ..))
+import Algebra.Lattice.Levitated  (Levitated)
 import qualified Algebra.Lattice.Levitated as L
-import Algebra.Lattice.Ordered (Ordered (..))
-import Algebra.PartialOrd (leq)
+import Algebra.Lattice.Ordered    (Ordered    ( ..))
+import Algebra.PartialOrd         (leq)
 #ifdef EXPORT_PROPERTIES
-import Test.QuickCheck hiding (Ordered, (==>))
+import Test.QuickCheck            (Blind (..), Property, counterexample, (.&&.), (===))
 import qualified Test.QuickCheck as QC
 #endif
 
@@ -219,26 +220,40 @@ instance (Eq k, Finite k, Hashable k, HeytingAlgebra v) => HeytingAlgebra (HM.Ha
 -- /Properties are exported only if @export-properties@ cabal flag is defined./
 #ifdef EXPORT_PROPERTIES
 
+withBlinds :: Show a => String -> [a] -> String
+withBlinds s bs = s ++ "\n\t" ++ foldMap id (intersperse "\n\t" (map show bs))
+
 -- |
--- Verfifies bounded meet semilattice laws.
+-- Verifies bounded meet semilattice laws.
 prop_BoundedMeetSemiLattice :: (BoundedMeetSemiLattice a, Eq a, Show a)
-                            => a -> a -> a -> Property
-prop_BoundedMeetSemiLattice a b c =
-       counterexample "meet associativity" ((a /\ (b /\ c)) === ((a /\ b) /\ c))
-  .&&. counterexample "meet commutativity" ((a /\ b) === (b /\ a))
-  .&&. counterexample "meet idempotent" ((a /\ a) === a)
-  .&&. counterexample "meet identity" ((top /\ a) === a)
-  .&&. counterexample "meet order" (Meet (a /\ b) `leq` Meet a)
+                            => Blind a -> Blind a -> Blind a -> Property
+prop_BoundedMeetSemiLattice (Blind a) (Blind b) (Blind c) =
+       counterexample (withBlinds "meet associativity" [a, b, c])
+        ((a /\ (b /\ c)) === ((a /\ b) /\ c))
+  .&&. counterexample (withBlinds "meet commutativity" [a, b])
+        ((a /\ b) === (b /\ a))
+  .&&. counterexample (withBlinds "meet idempotent" [a])
+        ((a /\ a) === a)
+  .&&. counterexample (withBlinds "meet identity" [a])
+        ((top /\ a) === a)
+  .&&. counterexample (withBlinds "meet order" [a, b])
+        (Meet (a /\ b) `leq` Meet a)
 
 -- |
 -- Verfifies bounded join semilattice laws.
-prop_BoundedJoinSemiLattice :: (BoundedJoinSemiLattice a, Eq a, Show a) => a -> a -> a -> Property
-prop_BoundedJoinSemiLattice a b c =
-       counterexample "join associativity" ((a \/ (b \/ c)) === ((a \/ b) \/ c))
-  .&&. counterexample "join commutativity" ((a \/ b) === (b \/ a))
-  .&&. counterexample "join idempotent" ((a \/ a) === a)
-  .&&. counterexample "join identity" ((bottom \/ a) === a)
-  .&&. counterexample "join order" (Join a `leq` Join (a \/ b))
+prop_BoundedJoinSemiLattice :: (BoundedJoinSemiLattice a, Eq a, Show a)
+                            => Blind a -> Blind a -> Blind a -> Property
+prop_BoundedJoinSemiLattice (Blind a) (Blind b) (Blind c) =
+       counterexample (withBlinds "join associativity" [a, b, c])
+        ((a \/ (b \/ c)) === ((a \/ b) \/ c))
+  .&&. counterexample (withBlinds "join commutativity" [a, b])
+        ((a \/ b) === (b \/ a))
+  .&&. counterexample (withBlinds "join idempotent" [a])
+        ((a \/ a) === a)
+  .&&. counterexample (withBlinds "join identity" [a])
+        ((bottom \/ a) === a)
+  .&&. counterexample (withBlinds "join order" [a, b])
+        (Join a `leq` Join (a \/ b))
 
 -- |
 -- Verifies the Heyting algebra law for @==>@:
@@ -248,43 +263,27 @@ prop_implies :: (HeytingAlgebra a, Eq a, Show a)
              => Blind a -> Blind a -> Blind a -> Property
 prop_implies (Blind x) (Blind a) (Blind b) =
   counterexample
-    ("Failed: x ≤ (a ⇒ b) then x ∧ a ≤ b"
-        ++ "\n\tx = " ++ show x
-        ++ "\n\ta = " ++ show a
-        ++ "\n\tb = " ++ show b
-        ++ "\n\ta ⇒ b = " ++ show (a ==> b))
+    (withBlinds "Failed: x ≤ (a ⇒ b) then x ∧ a ≤ b" [x, a, b])
     (Meet x `leq` Meet (a ==> b) QC.==> (Meet (x /\ a) `leq` Meet b))
   .&&.
   counterexample
-    ("Failed: x ∧ a ≤ b then x ≤ (a ⇒ b)"
-        ++ "\n\tx = " ++ show x
-        ++ "\n\ta = " ++ show a
-        ++ "\n\tb = " ++ show b
-        ++ "\n\ta ⇒ b = " ++ show (a ==> b))
+    (withBlinds "Failed: x ∧ a ≤ b then x ≤ (a ⇒ b)" [x, a, b])
     (Meet (x /\ a) `leq` Meet b QC.==> (Meet x `leq` Meet (a ==> b)))
   .&&.
   counterexample
-    ("Failed: a ≤ b ⇏ not a"
-        ++ "\n\ta = " ++ show a
-        ++ "\n\tb = " ++ show b)
+    (withBlinds "Failed: a ≤ b ⇏ not a" [a, b])
     (Meet a `leq` Meet b QC.==> (Meet (not b) `leq` Meet (not a)))
   .&&.
   counterexample
-    ("Failed: not (a ∧ b) ≠ not a ∨ not b"
-        ++ "\n\ta = " ++ show a
-        ++ "\n\tb = " ++ show b)
+    (withBlinds "Failed: not (a ∧ b) ≠ not a ∨ not b" [a, b])
     (not (a /\  b) === not a \/ not b)
   .&&.
   counterexample
-    ("Failed: not (a ∨ b) ≠ not a ∧ not b"
-        ++ "\n\ta = " ++ show a
-        ++ "\n\tb = " ++ show b)
+    (withBlinds "Failed: not (a ∨ b) ≠ not a ∧ not b" [a, b])
     (not (a \/  b) === not a /\ not b)
   .&&.
   counterexample
-    ("Failed: (a ⇒ b) ∧ a ≰ b"
-        ++ "\n\ta = " ++ show a
-        ++ "\n\tb = " ++ show b)
+    (withBlinds "Failed: (a ⇒ b) ∧ a ≰ b" [a, b])
     (Meet ((a ==> b) /\ a) `leq` Meet b)
 
 
@@ -295,9 +294,9 @@ prop_implies (Blind x) (Blind a) (Blind b) =
 -- * bounded lattice laws
 -- * @'prop_implies'@
 prop_HeytingAlgebra :: (HeytingAlgebra a, Eq a, Show a)
-                    => a -> a -> a -> Property
-prop_HeytingAlgebra a b c = 
-       prop_BoundedJoinSemiLattice a b c
-  .&&. prop_BoundedMeetSemiLattice a b c
+                    => Blind a -> Blind a -> Blind a -> Property
+prop_HeytingAlgebra (Blind a) (Blind b) (Blind c) = 
+       prop_BoundedJoinSemiLattice (Blind a) (Blind b) (Blind c)
+  .&&. prop_BoundedMeetSemiLattice (Blind a) (Blind b) (Blind c)
   .&&. prop_implies (Blind a) (Blind b) (Blind c)
 #endif
