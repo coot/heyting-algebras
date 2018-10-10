@@ -243,14 +243,49 @@ prop_BoundedJoinSemiLattice a b c =
 -- |
 -- Verifies the Heyting algebra law for @==>@:
 -- for all @a@: @_ /\ a@ is left adjoint to  @a ==>@
+-- and some other properties that are a consequence of that.
 prop_implies :: (HeytingAlgebra a, Eq a, Show a)
-             => a -> a -> a -> Property
-prop_implies x a b =
-  counterexample ("Failed: x ≤ (a ⇒ b) then x ∧ a ≤ b\n\ta ⇒ b = " ++ show (a ==> b))
+             => Blind a -> Blind a -> Blind a -> Property
+prop_implies (Blind x) (Blind a) (Blind b) =
+  counterexample
+    ("Failed: x ≤ (a ⇒ b) then x ∧ a ≤ b"
+        ++ "\n\tx = " ++ show x
+        ++ "\n\ta = " ++ show a
+        ++ "\n\tb = " ++ show b
+        ++ "\n\ta ⇒ b = " ++ show (a ==> b))
     (Meet x `leq` Meet (a ==> b) QC.==> (Meet (x /\ a) `leq` Meet b))
   .&&.
-  counterexample ("Failed: x ∧ a ≤ b then x ≤ (a ⇒ b)\n\ta ⇒ b = " ++ show (a ==> b))
+  counterexample
+    ("Failed: x ∧ a ≤ b then x ≤ (a ⇒ b)"
+        ++ "\n\tx = " ++ show x
+        ++ "\n\ta = " ++ show a
+        ++ "\n\tb = " ++ show b
+        ++ "\n\ta ⇒ b = " ++ show (a ==> b))
     (Meet (x /\ a) `leq` Meet b QC.==> (Meet x `leq` Meet (a ==> b)))
+  .&&.
+  counterexample
+    ("Failed: a ≤ b ⇏ not a"
+        ++ "\n\ta = " ++ show a
+        ++ "\n\tb = " ++ show b)
+    (Meet a `leq` Meet b QC.==> (Meet (not b) `leq` Meet (not a)))
+  .&&.
+  counterexample
+    ("Failed: not (a ∧ b) ≠ not a ∨ not b"
+        ++ "\n\ta = " ++ show a
+        ++ "\n\tb = " ++ show b)
+    (not (a /\  b) === not a \/ not b)
+  .&&.
+  counterexample
+    ("Failed: not (a ∨ b) ≠ not a ∧ not b"
+        ++ "\n\ta = " ++ show a
+        ++ "\n\tb = " ++ show b)
+    (not (a \/  b) === not a /\ not b)
+  .&&.
+  counterexample
+    ("Failed: (a ⇒ b) ∧ a ≰ b"
+        ++ "\n\ta = " ++ show a
+        ++ "\n\tb = " ++ show b)
+    (Meet ((a ==> b) /\ a) `leq` Meet b)
 
 
 -- |
@@ -264,5 +299,5 @@ prop_HeytingAlgebra :: (HeytingAlgebra a, Eq a, Show a)
 prop_HeytingAlgebra a b c = 
        prop_BoundedJoinSemiLattice a b c
   .&&. prop_BoundedMeetSemiLattice a b c
-  .&&. prop_implies a b c
+  .&&. prop_implies (Blind a) (Blind b) (Blind c)
 #endif
