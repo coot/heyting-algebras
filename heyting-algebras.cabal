@@ -67,6 +67,7 @@ test-suite heyting-algebras-test
   default-language:    Haskell2010
   default-extensions:  FlexibleInstances
                      , TypeApplications
+  ghc-options:       -threaded -rtsopts -with-rtsopts=-N
 
 source-repository head
   type:     git
