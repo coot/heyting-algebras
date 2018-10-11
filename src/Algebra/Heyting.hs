@@ -208,7 +208,7 @@ instance (Ord k, Finite k, HeytingAlgebra v) => HeytingAlgebra (M.Map k v) where
       (Merge.mapMissing (\_ _ -> top))     -- put @top@ if an element is missing in @a@
       (Merge.zipWithMatched (\_ -> (==>))) -- merge  matching elements with @==>@
       a b
-                            
+
     \/ M.fromList [(k, top) | k <- universe, not (M.member k a), not (M.member k b) ] 
                             -- for elements which are not in a, nor in b add
                             -- a @top@ key

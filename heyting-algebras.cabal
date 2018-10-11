@@ -55,7 +55,7 @@ library
     cpp-options:
       -DEXPORT_PROPERTIES
 
-test-suite heyting-algebras-test
+test-suite heyting-algebras-tests
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Main.hs
