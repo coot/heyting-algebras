@@ -1,8 +1,11 @@
 language: nix
 script:
 - nix-env -iA cachix -f https://github.com/NixOS/nixpkgs/tarball/1d4de0d552ae9aa66a5b8dee5fb0650a4372d148
+- echo "trusted-users = root ${USER}" | sudo tee -a /etc/nix/nix.conf || true
+- sudo pkill nix-daemon || true
 - cachix use heyting-algebras
-- nix-build -A heyting-algebras --argstr compiler $COMPILER | cachix push heyting-algebras
+- nix-build -A heyting-algebras --argstr compiler $COMPILER
+- cachix push heyting-algebras ./result
 matrix:
   include:
   - name: ghc843
@@ -11,6 +14,16 @@ matrix:
     env: COMPILER="ghc822"
   - name: ghc802
     env: COMPILER="ghc802"
+
+  - name: ghc843
+    env: COMPILER="ghc843"
+    os: osx
+  - name: ghc822
+    env: COMPILER="ghc822"
+    os: osx
+  - name: ghc802
+    env: COMPILER="ghc802"
+    os: osx
 env:
   global:
     secure: MrEIDTusVPq2G2ijJxzvt6k39qyU24TCcH8PiHuYDEsaaIjfMDjojLG/YZoyu2i0xADc6sQi89GZ7XM6srQ41cus3C4HoMfctl6eij0xXFX7gqoC1MTbAdQ7NZN158RZtd8cIwdd551gwMvpC86w4CP7TK/X9KMxqaIHxbFbv0emJTLGDtYdOaizx2q9zeGOTeHI4SUNQ2fic3bmy4W/bB5W0/cahF6+YP4109AzOgv5N0nH7bg19NDs4qAp2NerEnag7ouzlqUx9Pr4/K6PtsIOjgwLABczKcPYR+isB5/adIlX+j8+XlA8JH1u8klLVn2fZcsfWsKDR/izAXxpM15y8I7cN6Hf7HT4bcTRhNtrhLAO+0PCbb7ghYjieX1Qc+HMst+Ofb9xlrTLPJb6AGCDb+luMr62GtFZD/CG8GQnhbgwJUzP1CKigqd5CARXL5MsGkjJvg58de78sPVr8nPox/HbO+Nl1n6PKp7x/cCHQ8pS/RjAGe7mBghDkMZmzqAUfM0sGql8iKXTYcKW/yLI+YKMsEq9xtUcci4vfC35PtCCUqbo4ri+jsaW0qmOyFXczWusZqUreidzK14Dlr5dLrOIBnM9S8VaOqPrMJ23rn3LIKIG2G7LFgkHFFts9e90yErMKw9dW4I3pis0SabIKcpx92prIYmPU+zsmhg=
