@@ -7,7 +7,7 @@ module Algebra.Heyting.BoolRing
 
 import Prelude hiding (not)
 
-#if __GLASGOW_HASKELL__ <= 822
+#if __GLASGOW_HASKELL__ < 804
 import Data.Semigroup (Semigroup (..))
 #endif
 
@@ -37,7 +37,7 @@ instance HeytingAlgebra a => Semigroup (BoolRing a) where
 instance HeytingAlgebra a => Monoid (BoolRing a) where
   mempty = BoolRing bottom
 
-#if __GLASGOW_HASKELL__ <= 822
+#if __GLASGOW_HASKELL__ <= 804
   mappend = (<>)
 #endif
 

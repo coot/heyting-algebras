@@ -28,7 +28,7 @@ import Data.Semigroup         (All (..), Any (..), Endo (..))
 import Data.Tagged            (Tagged (..))
 import Data.Universe.Class    (Finite, universe)
 import qualified Data.Map as M
-#if __GLASGOW_HASKELL__ >= 822
+#if __GLASGOW_HASKELL__ >= 804
 import qualified Data.Map.Merge.Lazy as Merge
 #endif
 import qualified Data.Set as S
@@ -201,7 +201,7 @@ instance (Ord k, Finite k, HeytingAlgebra v) => HeytingAlgebra (M.Map k v) where
   -- _xx__
   -- __yy_
   -- T_iTT where i = x ==> y; T = top; _ missing (or removed key)
-#if __GLASOW_HASKELL__ >= 822
+#if __GLASOW_HASKELL__ >= 804
   a ==> b =
     Merge.merge
       Merge.dropMissing                    -- drop if an element is missing in @b@
