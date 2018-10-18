@@ -6,6 +6,6 @@ mkDerivation {
     [ ".hs" "LICENSE" "ChangeLog.md" "heyting-algebras.cabal" ];
   libraryHaskellDepends = [ base free-algebras lattices QuickCheck semiring-simple tagged ];
   testHaskellDepends = [ base lattices QuickCheck tasty tasty-quickcheck ];
-  license = stdenv.lib.licenses.mpl20;
+  license = stdenv.lib.licenses.bsd3;
   enableSeparateDocOutput = false;
 }

@@ -4,7 +4,7 @@ synopsis:            Heyting and Boolean algebras
 description:
   This package provides Heyting and Boolean operations together
   with various constructions of Heyting algebras.
-license:             MPL-2.0
+license:             BSD
 license-file:        LICENSE
 author:              Marcin Szamotulski
 maintainer:          profunctor@pm.me
