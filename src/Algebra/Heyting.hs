@@ -1,10 +1,12 @@
 {-# LANGUAGE CPP #-}
 module Algebra.Heyting
   ( HeytingAlgebra (..)
+  , implies
+  , (<=>)
   , iff
   , iff'
   , toBoolean
-
+#ifdef EXPORT_PROPERTIES
     -- * QuickCheck Properties
     --
     -- $properties
@@ -13,6 +15,7 @@ module Algebra.Heyting
   , prop_DistributiveLattice
   , prop_HeytingAlgebra
   , prop_implies
+#endif
   )
   where
 
@@ -20,27 +23,40 @@ import Prelude hiding (not)
 import qualified Prelude
 
 import Control.Applicative    (Const (..))
+#ifdef EXPORT_PROPERTIES
 import Data.List              (intersperse)
+#endif
 import Data.Functor.Identity  (Identity (..))
 import Data.Hashable          (Hashable)
 import Data.Proxy             (Proxy (..))
-import Data.Semigroup         (All (..), Any (..), Endo (..))
+import Data.Semigroup         ( All (..)
+                              , Any (..)
+                              , Endo (..)
+#ifdef EXPORT_PROPERTIES
+                              , (<>)
+#endif
+                              )
+#ifdef EXPORT_PROPERTIES
+import Data.Monoid            (mempty)
+#endif
 import Data.Tagged            (Tagged (..))
 import Data.Universe.Class    (Finite, universe)
 import qualified Data.Map as M
-#if __GLASGOW_HASKELL__ >= 804
-import qualified Data.Map.Merge.Lazy as Merge
-#endif
 import qualified Data.Set as S
 import qualified Data.HashMap.Lazy as HM
 import qualified Data.HashSet      as HS
 
+#ifdef EXPORT_PROPERTIES
 import Algebra.Lattice ( BoundedJoinSemiLattice (..)
                        , BoundedMeetSemiLattice (..)
-                       , BoundedLattice
                        , Lattice
-                       , Meet (..)
                        , Join (..)
+                       )
+#endif
+import Algebra.Lattice ( BoundedLattice
+                       , Meet (..)
+                       , bottom
+                       , top
                        , (/\)
                        , (\/)
                        )
@@ -90,6 +106,8 @@ class BoundedLattice a => HeytingAlgebra a where
   -- |
   -- Default implementation: @a ==> b = not a \/ b@, it requires @not@ to
   -- satisfy Boolean axioms, which will make it into a Boolean algebra.
+  --
+  -- Fixity is less than fixity of both @'\/'@ and @'/\'@.
   (==>) :: a -> a -> a
   (==>) a b = not a \/ b
 
@@ -102,12 +120,20 @@ class BoundedLattice a => HeytingAlgebra a where
 
   {-# MINIMAL (==>) | not #-}
 
--- |
--- Less than fixity of both @'\/'@ and @'/\'@.
 infixr 4 ==>
 
+-- |
+-- @'implies'@ is an alias for @'==>'@
+implies :: HeytingAlgebra a => a -> a -> a
+implies = (==>)
+
+(<=>) :: HeytingAlgebra a => a -> a -> a
+a <=> b = (a ==> b) /\ (b ==> a)
+
+-- |
+-- @'iff'@ is an alias for @'<=>'@
 iff :: HeytingAlgebra a => a -> a -> a
-iff a b = (a ==> b) /\ (b ==> a)
+iff = (<=>)
 
 iff' :: (Eq a, HeytingAlgebra a) => a -> a -> Bool
 iff' a b = Meet top `leq` Meet (iff a b)
@@ -120,7 +146,7 @@ toBoolean :: HeytingAlgebra a => a -> a
 toBoolean = not . not
 
 instance HeytingAlgebra Bool where
-  not     = Prelude.not
+  not = Prelude.not
 
 instance HeytingAlgebra All where
   All a ==> All b = All (a ==> b)
@@ -142,8 +168,10 @@ instance HeytingAlgebra a => HeytingAlgebra (Tagged t a) where
 instance HeytingAlgebra b => HeytingAlgebra (a -> b) where
   f ==> g = \a -> f a ==> g a
 
+#if MIN_VERSION_base(4,8,0)
 instance HeytingAlgebra a => HeytingAlgebra (Identity a) where
   (Identity a) ==> (Identity b) = Identity (a ==> b)
+#endif
 
 instance HeytingAlgebra a => HeytingAlgebra (Const a b) where
   (Const a) ==> (Const b) = Const (a ==> b)
@@ -231,7 +259,7 @@ instance (Eq k, Finite k, Hashable k, HeytingAlgebra v) => HeytingAlgebra (HM.Ha
 #ifdef EXPORT_PROPERTIES
 
 withBlinds :: Show a => String -> [a] -> String
-withBlinds s bs = s ++ "\n\t" ++ foldMap id (intersperse "\n\t" (map show bs))
+withBlinds s bs = s ++ "\n\t" ++ foldr (<>) mempty (intersperse "\n\t" (map show bs))
 
 -- |
 -- Verifies bounded meet semilattice laws.
