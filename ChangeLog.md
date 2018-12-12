@@ -6,6 +6,7 @@
 * Added `BoolRing` a Boolean ring
 * newtype `Ordered` adds Heyting algebra instance for every type satisfying the
   `Ord` constraint.
+* (<=>) operator added
 
 ## 0.0.1.1 -- 2018.10.5
 
