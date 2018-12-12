@@ -15,7 +15,7 @@ let
   doHaddock = if haddock
     then lib.doHaddock
     else lib.dontHaddock;
-  doTest = if test
+  doTest = if test && export-properties
     then lib.doCheck
     else lib.dontCheck;
   doBench = if benchmarks

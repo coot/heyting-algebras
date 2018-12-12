@@ -9,7 +9,7 @@ let
   default = import ./default.nix {inherit compiler haddock test;};
 in
   {
-    heyting-algebra = if nixpkgs.lib.inNixShell
+    heyting-algebras = if nixpkgs.lib.inNixShell
       then default.heyting-algebras.env
       else default.heyting-algebras;
   }
