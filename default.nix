@@ -1,4 +1,4 @@
-{ compiler ? "ghc843"
+{ compiler ? "ghc844"
 , haddock ? true
 , test ? true
 , benchmarks ? false
@@ -6,7 +6,7 @@
 }:
 with builtins;
 let
-  nixpkgs = import ./nix/nixpkgs.nix { inherit compiler; };
+  nixpkgs = import ./nix/nixpkgs.nix {};
   lib = nixpkgs.haskell.lib;
   callPackage = nixpkgs.haskell.packages.${compiler}.callPackage;
 
