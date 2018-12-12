@@ -7,6 +7,8 @@ module Algebra.Heyting.BoolRing
 
 import Prelude hiding (not)
 
+import Data.Monoid (Monoid (..))
+
 #if __GLASGOW_HASKELL__ < 804
 import Data.Semigroup (Semigroup (..))
 #endif

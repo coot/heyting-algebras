@@ -15,8 +15,10 @@ module Algebra.Boolean
 
     -- * QuickCheck Properties
     -- $properties
+#ifdef EXPORT_PROPERTIES
   , prop_not 
   , prop_BooleanAlgebra
+#endif
   ) where
 
 import Prelude hiding (not)
@@ -40,8 +42,10 @@ import Algebra.Lattice ( Lattice
                        , BoundedJoinSemiLattice
                        , MeetSemiLattice (..)
                        , BoundedMeetSemiLattice
+#ifdef EXPORT_PROPERTIES
                        , bottom
                        , top
+#endif
                        )
 
 import Algebra.Heyting ( HeytingAlgebra (..)
@@ -49,7 +53,9 @@ import Algebra.Heyting ( HeytingAlgebra (..)
                        , iff'
                        , not
                        , toBoolean
+#ifdef EXPORT_PROPERTIES
                        , prop_HeytingAlgebra
+#endif
                        )
 
 -- |
@@ -109,7 +115,9 @@ instance BooleanAlgebra a => BooleanAlgebra (Tagged t a)
 
 instance BooleanAlgebra b => BooleanAlgebra (a -> b)
 
+#if MIN_VERSION_base(4,8,0)
 instance BooleanAlgebra a => BooleanAlgebra (Identity a)
+#endif
 
 instance BooleanAlgebra a => BooleanAlgebra (Const a b)
 
