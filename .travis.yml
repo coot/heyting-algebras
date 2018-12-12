@@ -5,6 +5,7 @@ script:
 - sudo pkill nix-daemon || true
 - cachix use heyting-algebras
 - nix-build -A heyting-algebras --argstr compiler $COMPILER
+- nix-build -A heyting-algebras --arg export-properties false
 - cachix push heyting-algebras ./result
 matrix:
   include:
