@@ -5,7 +5,7 @@
 }:
 with builtins;
 let
-  nixpkgs = import ./nix/nixpkgs.nix {};
+  nixpkgs = import ./nix/nixpkgs.nix { inherit compiler; };
   default = import ./default.nix {inherit compiler haddock test;};
 in
   {
