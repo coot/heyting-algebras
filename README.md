@@ -19,7 +19,7 @@ A very good introduction to Heyting algebras can be found at
 [ncatlab](https://ncatlab.org/nlab/show/Heyting%2Balgebra).  Heyting algebras
 are the crux of [intuitionistic
 logic](https://en.wikipedia.org/wiki/Intuitionistic_logic), which drops the
-axiom of exluded middle.  From categorical point of view, Heyting algebras are
+axiom of excluded middle.  From categorical point of view, Heyting algebras are
 posets (categories with at most one arrow between any objects), which are also
 Cartesian closed (and finitely (co-)complete).  Note that this makes any
 Heyting algebra a simply typed lambda calculus; hence one more incentive to
@@ -27,7 +27,7 @@ learn how to use them.  For example currying holds in Heyting algebras: `a =>
 (b ⇒ c)` is equal to `(a ∧ b) ⇒ c`
 
 The most important operation is implication `(==>) :: HeytingAlgebra a => a ->
-a -> a` (whcih we might also write as ⇒ in documentation); since every Boolean
+a -> a` (which we might also write as ⇒ in documentation); since every Boolean
 algebra is a Heyting algebra via `a ==> b = not a \/ b` (using the lattice
 notation for `or`).  It is very handy in expression conditional logic.
 
