@@ -12,51 +12,34 @@ module Algebra.Boolean
   , Boolean
   , runBoolean
   , boolean
-
-    -- * QuickCheck Properties
-    -- $properties
-#ifdef EXPORT_PROPERTIES
-  , prop_not 
-  , prop_BooleanAlgebra
-#endif
   ) where
 
-import Prelude hiding (not)
+import           Prelude hiding (not)
 
-import Control.Applicative    (Const (..))
-import Data.Data              (Data, Typeable)
-import Data.Functor.Identity  (Identity (..))
-import Data.Proxy             (Proxy (..))
-import Data.Semigroup         (All (..), Any (..), Endo (..))
-import Data.Tagged            (Tagged (..))
-import Data.Universe.Class    (Finite)
+import           Control.Applicative    (Const (..))
+import           Data.Data              (Data, Typeable)
+import           Data.Functor.Identity  (Identity (..))
+import           Data.Proxy             (Proxy (..))
+import           Data.Semigroup         (All (..), Any (..), Endo (..))
+import           Data.Tagged            (Tagged (..))
+import           Data.Universe.Class    (Finite)
 import qualified Data.Set as S
-import GHC.Generics          (Generic)
-#ifdef EXPORT_PROPERTIES
-import Test.QuickCheck        (Blind (..), Property, counterexample, (.&&.), (===))
-#endif
+import           GHC.Generics           (Generic)
 
-import Algebra.Lattice ( Lattice
-                       , BoundedLattice
-                       , JoinSemiLattice (..)
-                       , BoundedJoinSemiLattice
-                       , MeetSemiLattice (..)
-                       , BoundedMeetSemiLattice
-#ifdef EXPORT_PROPERTIES
-                       , bottom
-                       , top
-#endif
-                       )
+import           Algebra.Lattice        ( Lattice
+                                        , BoundedLattice
+                                        , JoinSemiLattice (..)
+                                        , BoundedJoinSemiLattice
+                                        , MeetSemiLattice (..)
+                                        , BoundedMeetSemiLattice
+                                        )
 
-import Algebra.Heyting ( HeytingAlgebra (..)
-                       , iff
-                       , iff'
-                       , not
-                       , toBoolean
-#ifdef EXPORT_PROPERTIES
-                       , prop_HeytingAlgebra
-#endif
-                       )
+import           Algebra.Heyting        ( HeytingAlgebra (..)
+                                        , iff
+                                        , iff'
+                                        , not
+                                        , toBoolean
+                                        )
 
 -- |
 -- Boolean algebra is a Heyting algebra which negation satisfies the law of
@@ -130,27 +113,3 @@ instance (BooleanAlgebra a, BooleanAlgebra b) => BooleanAlgebra (a, b)
 --
 
 instance (Ord a, Finite a) => BooleanAlgebra (S.Set a)
-
--- 
--- $properties
---
--- /Properties are exported only if @export-properties@ cabal flag is defined./
-#ifdef EXPORT_PROPERTIES
-
--- |
--- Test that @'not'@ satisfies Boolean algebra axioms.
-prop_not :: (HeytingAlgebra a, Eq a, Show a) => a -> Property
-prop_not a =
-       counterexample "not (not a) /= a" (not (not a) === a)
-  .&&. counterexample "not a ∧ a /= bottom" (not a /\ a === bottom)
-  .&&. counterexample "not a ∨ a /= top" (not a \/ a === top)
-
--- |
--- Test that @a@ is satisfy both @'Algebra.Heyting.prop_HeytingAlgebra'@ and
--- @'prop_not'@.
-prop_BooleanAlgebra :: (BooleanAlgebra a, Eq a, Show a)
-                    => a -> a -> a -> Property
-prop_BooleanAlgebra a b c =
-       prop_HeytingAlgebra (Blind a) (Blind b) (Blind c)
-  .&&. prop_not a
-#endif

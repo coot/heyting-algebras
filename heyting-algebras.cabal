@@ -17,20 +17,15 @@ extra-source-files:
 cabal-version:       >=1.10
 tested-with:         GHC==8.0.2, GHC==8.2.2, GHC==8.4.3
 
-flag export-properties
-  description:
-    Export quickcheck properties from library; this adds QuickCheck
-    as a dependency.
-  manual: False
-  default: True
-
 library
   exposed-modules:     Algebra.Heyting
                        Algebra.Heyting.Free
                        Algebra.Heyting.Layered
                        Algebra.Heyting.BoolRing
+                       Algebra.Heyting.Properties
                        Algebra.Boolean
                        Algebra.Boolean.Free
+                       Algebra.Boolean.Properties
   -- other-modules:
   -- other-extensions:
   build-depends:       base           >= 4.9      && < 4.13
@@ -49,11 +44,6 @@ library
                        RankNTypes
                        PackageImports
   ghc-options:        -Wall
-  if flag(export-properties)
-    build-depends:
-      QuickCheck     >= 2.10     && < 2.13
-    cpp-options:
-      -DEXPORT_PROPERTIES
 
 test-suite heyting-algebras-tests
   type:                exitcode-stdio-1.0

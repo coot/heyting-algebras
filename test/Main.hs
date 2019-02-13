@@ -2,60 +2,68 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
-import Algebra.Lattice ( JoinSemiLattice
-                       , BoundedJoinSemiLattice
-                       , MeetSemiLattice
-                       , BoundedMeetSemiLattice
-                       , Lattice
-                       , BoundedLattice
-                       )
-import Algebra.Lattice.Dropped (Dropped (..))
-import Algebra.Lattice.Lifted (Lifted (..))
-import Algebra.Lattice.Levitated (Levitated)
+import           Algebra.Lattice ( JoinSemiLattice
+                                 , BoundedJoinSemiLattice
+                                 , MeetSemiLattice
+                                 , BoundedMeetSemiLattice
+                                 , Lattice
+                                 , BoundedLattice
+                                 )
+import           Algebra.Lattice.Dropped (Dropped (..))
+import           Algebra.Lattice.Lifted (Lifted (..))
+import           Algebra.Lattice.Levitated (Levitated)
 import qualified Algebra.Lattice.Levitated as L
-import Algebra.Lattice.Ordered (Ordered (..))
-import Data.Universe.Class (Universe (..), Finite)
+import           Algebra.Lattice.Op (Op (..))
+import           Algebra.Lattice.Ordered (Ordered (..))
+import           Data.Universe.Class (Universe (..), Finite)
 import qualified Data.Set as S
 import qualified Data.Map as M
 
-import Algebra.Boolean
-import Algebra.Heyting
-import Algebra.Heyting.Layered
+import           Algebra.Boolean
+import           Algebra.Boolean.Properties
+import           Algebra.Heyting
+import           Algebra.Heyting.Properties
+import           Algebra.Heyting.Layered
 
-import Test.Tasty
-import Test.Tasty.QuickCheck hiding (Ordered)
+import           Test.Tasty
+import           Test.Tasty.QuickCheck hiding (Ordered)
 
 main :: IO ()
 main = defaultMain tests
+
+counterExampleProperty
+  :: CounterExample
+  -> Property
+counterExampleProperty = maybe (property True) (flip counterexample False) . fromCounterExample
 
 tests :: TestTree
 tests =
   testGroup "heyting-algebras tests"
     [ testGroup "Boolean algebras"
-        [ testProperty "Bool"                   $ prop_BooleanAlgebra @Bool
-        , testProperty "(Bool, Bool)"           $ prop_BooleanAlgebra @(Bool, Bool)
-        , testProperty "Boolean (Lifted Bool)"  $ prop_BooleanAlgebra @(Arb (Boolean (Arb (Lifted Bool))))
-        , testProperty "Boolean (Dropped Bool)" $ prop_BooleanAlgebra @(Arb (Boolean (Arb (Dropped Bool))))
-        , testProperty "(Set S5)"               $ prop_BooleanAlgebra @(Arb (S.Set S5))
+        [ testProperty "Bool"                   $ (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra @Bool
+        , testProperty "(Bool, Bool)"           $ (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra @(Bool, Bool)
+        , testProperty "Boolean (Lifted Bool)"  $ (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra @(Arb (Boolean (Arb (Lifted Bool))))
+        , testProperty "Boolean (Dropped Bool)" $ (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra @(Arb (Boolean (Arb (Dropped Bool))))
+        , testProperty "(Set S5)"               $ (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra @(Arb (S.Set S5))
         ]
     , testGroup "Non Boolean algebras"
-        [ testProperty "Not a BooleanAlgebra (Lifted Bool)"  $ expectFailure $ prop_not @(Arb (Lifted Bool))
-        , testProperty "Not a BooleanAlgebra (Dropped Bool)" $ expectFailure $ prop_not @(Arb (Dropped Bool))
-        , testProperty "Not a BooleanAlgebra Levitated (Ordered Int)" $ expectFailure $ prop_not @(Arb (Levitated (Arb (Ordered Int))))
+        [ testProperty "Not a BooleanAlgebra (Lifted Bool)"  $ expectFailure $ counterExampleProperty . prop_not @(Arb (Lifted Bool))
+        , testProperty "Not a BooleanAlgebra (Dropped Bool)" $ expectFailure $ counterExampleProperty . prop_not @(Arb (Dropped Bool))
+        , testProperty "Not a BooleanAlgebra Levitated (Ordered Int)" $ expectFailure $ counterExampleProperty . prop_not @(Arb (Levitated (Arb (Ordered Int))))
         ]
     , testGroup "Heyting algebras"
-        [ testProperty "Lifted Bool"            $ prop_HeytingAlgebra @(Arb (Lifted Bool))
-        , testProperty "Dropped Bool"           $ prop_HeytingAlgebra @(Arb (Dropped Bool))
-        , testProperty "Layered Bool Bool"      $ prop_HeytingAlgebra @(Arb (Layered Bool Bool))
-        , testProperty "Levitated Bool"         $ prop_HeytingAlgebra @(Arb (Levitated Bool))
+        [ testProperty "Lifted Bool"            $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (Lifted Bool))
+        , testProperty "Dropped Bool"           $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (Dropped Bool))
+        , testProperty "Layered Bool Bool"      $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (Layered Bool Bool))
+        , testProperty "Levitated Bool"         $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (Levitated Bool))
         , testProperty "Sum (Lifted Bool) (Dropped Bool)"
-                                                $ prop_HeytingAlgebra @(Arb (Layered (Arb (Lifted Bool)) (Arb (Dropped Bool))))
-        , testProperty "Levitated (Ordered Int)" $ prop_HeytingAlgebra @(Arb (Levitated (Arb (Ordered Int))))
-        , testProperty "Map S5 Bool"            $ prop_HeytingAlgebra @(Arb (M.Map S5 Bool))
-        , testProperty "Dropped (Lifted Bool)"  $ prop_HeytingAlgebra @(Composed Dropped Lifted Bool)
-        , testProperty "Lifted (Dropped Bool)"  $ prop_HeytingAlgebra @(Composed Lifted Dropped Bool)
-        , testProperty "Lifted (Lifted Bool)"   $ prop_HeytingAlgebra @(Composed Lifted Lifted Bool)
-        , testProperty "Dropped (Dropped Bool)" $ prop_HeytingAlgebra @(Composed Dropped Dropped Bool)
+                                                $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (Layered (Arb (Lifted Bool)) (Arb (Dropped Bool))))
+        , testProperty "Levitated (Ordered Int)" $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (Levitated (Arb (Ordered Int))))
+        , testProperty "Map S5 Bool"            $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (M.Map S5 Bool))
+        , testProperty "Dropped (Lifted Bool)"  $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Composed Dropped Lifted Bool)
+        , testProperty "Lifted (Dropped Bool)"  $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Composed Lifted Dropped Bool)
+        , testProperty "Lifted (Lifted Bool)"   $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Composed Lifted Lifted Bool)
+        , testProperty "Dropped (Dropped Bool)" $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Composed Dropped Dropped Bool)
         ]
     ]
 

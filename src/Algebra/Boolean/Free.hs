@@ -3,26 +3,24 @@ module Algebra.Boolean.Free
   ( FreeBoolean (..)
   ) where
 
-import Control.Monad (ap)
-import Algebra.Lattice
-  ( BoundedJoinSemiLattice (..)
-  , JoinSemiLattice (..)
-  , BoundedMeetSemiLattice (..)
-  , MeetSemiLattice (..)
-  , BoundedLattice
-  , Lattice
-  )
-import Data.Algebra.Free
-  ( AlgebraType0
-  , AlgebraType
-  , FreeAlgebra (..)
-  , proof
-  , fmapFree
-  , bindFree
-  )
+import           Control.Monad     (ap)
+import           Algebra.Lattice   ( BoundedJoinSemiLattice (..)
+                                   , JoinSemiLattice (..)
+                                   , BoundedMeetSemiLattice (..)
+                                   , MeetSemiLattice (..)
+                                   , BoundedLattice
+                                   , Lattice
+                                   )
+import           Data.Algebra.Free ( AlgebraType0
+                                   , AlgebraType
+                                   , FreeAlgebra (..)
+                                   , proof
+                                   , fmapFree
+                                   , bindFree
+                                   )
 
-import Algebra.Boolean (BooleanAlgebra)
-import Algebra.Heyting (HeytingAlgebra (..))
+import           Algebra.Boolean   (BooleanAlgebra)
+import           Algebra.Heyting   (HeytingAlgebra (..))
 
 -- |
 -- Free Boolean algebra.  @'FreeAlgebra'@ instance provides all the usual
