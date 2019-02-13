@@ -6,70 +6,43 @@ module Algebra.Heyting
   , iff
   , iff'
   , toBoolean
-#ifdef EXPORT_PROPERTIES
-    -- * QuickCheck Properties
-    --
-    -- $properties
-  , prop_BoundedMeetSemiLattice
-  , prop_BoundedJoinSemiLattice
-  , prop_DistributiveLattice
-  , prop_HeytingAlgebra
-  , prop_implies
-#endif
   )
   where
 
-import Prelude hiding (not)
+import           Prelude hiding (not)
 import qualified Prelude
 
-import Control.Applicative    (Const (..))
-#ifdef EXPORT_PROPERTIES
-import Data.List              (intersperse)
-#endif
-import Data.Functor.Identity  (Identity (..))
-import Data.Hashable          (Hashable)
-import Data.Proxy             (Proxy (..))
-import Data.Semigroup         ( All (..)
-                              , Any (..)
-                              , Endo (..)
-#ifdef EXPORT_PROPERTIES
-                              , (<>)
-#endif
-                              )
-#ifdef EXPORT_PROPERTIES
-import Data.Monoid            (mempty)
-#endif
-import Data.Tagged            (Tagged (..))
-import Data.Universe.Class    (Finite, universe)
+import           Control.Applicative    (Const (..))
+import           Data.Functor.Identity  (Identity (..))
+import           Data.Hashable          (Hashable)
+import           Data.Proxy             (Proxy (..))
+import           Data.Semigroup         ( All (..)
+                                        , Any (..)
+                                        , Endo (..)
+                                        )
+import           Data.Tagged            (Tagged (..))
+import           Data.Universe.Class    (Finite, universe)
 import qualified Data.Map as M
-import qualified Data.Set as S
+import           Data.Set (Set)
+import qualified Data.Set as Set
 import qualified Data.HashMap.Lazy as HM
 import qualified Data.HashSet      as HS
 
-#ifdef EXPORT_PROPERTIES
-import Algebra.Lattice ( BoundedJoinSemiLattice (..)
-                       , BoundedMeetSemiLattice (..)
-                       , Lattice
-                       , Join (..)
-                       )
-#endif
-import Algebra.Lattice ( BoundedLattice
-                       , Meet (..)
-                       , bottom
-                       , top
-                       , (/\)
-                       , (\/)
-                       )
-import Algebra.Lattice.Dropped    (Dropped    ( ..))
-import Algebra.Lattice.Lifted     (Lifted     ( ..))
-import Algebra.Lattice.Levitated  (Levitated)
+import           Algebra.Lattice ( BoundedJoinSemiLattice (..)
+                                 , BoundedMeetSemiLattice (..)
+                                 , BoundedLattice
+                                 , Meet (..)
+                                 , bottom
+                                 , top
+                                 , (/\)
+                                 , (\/)
+                                 )
+import           Algebra.Lattice.Dropped    (Dropped    (..))
+import           Algebra.Lattice.Lifted     (Lifted     (..))
+import           Algebra.Lattice.Levitated  (Levitated)
 import qualified Algebra.Lattice.Levitated as L
-import Algebra.Lattice.Ordered    (Ordered    ( ..))
-import Algebra.PartialOrd         (leq)
-#ifdef EXPORT_PROPERTIES
-import Test.QuickCheck            (Blind (..), Property, counterexample, (.&&.), (===))
-import qualified Test.QuickCheck as QC
-#endif
+import           Algebra.Lattice.Ordered    (Ordered    (..))
+import           Algebra.PartialOrd         (leq)
 
 -- |
 -- Heyting algebra is a bounded semi-lattice with implication which should
@@ -217,8 +190,8 @@ instance (Ord a, Bounded a) => HeytingAlgebra (Ordered a) where
 
 -- |
 -- Power set: the cannoical example of a Boolean algebra
-instance (Ord a, Finite a) => HeytingAlgebra (S.Set a) where
-  not a = S.fromList universe `S.difference` a
+instance (Ord a, Finite a) => HeytingAlgebra (Set a) where
+  not a = Set.fromList universe `Set.difference` a
 
 instance (Eq a, Finite a, Hashable a) => HeytingAlgebra (HS.HashSet a) where
   not a = HS.fromList universe `HS.difference` a
@@ -252,101 +225,3 @@ instance (Eq k, Finite k, Hashable k, HeytingAlgebra v) => HeytingAlgebra (HM.Ha
     `HM.union` HM.map (const top) (HM.difference b a)
     `HM.union` HM.fromList [(k, top) | k <- universe, not (HM.member k a), not (HM.member k b)]
 
---
--- $properties
---
--- /Properties are exported only if @export-properties@ cabal flag is defined./
-#ifdef EXPORT_PROPERTIES
-
-withBlinds :: Show a => String -> [a] -> String
-withBlinds s bs = s ++ "\n\t" ++ foldr (<>) mempty (intersperse "\n\t" (map show bs))
-
--- |
--- Verifies bounded meet semilattice laws.
-prop_BoundedMeetSemiLattice :: (BoundedMeetSemiLattice a, Eq a, Show a)
-                            => Blind a -> Blind a -> Blind a -> Property
-prop_BoundedMeetSemiLattice (Blind a) (Blind b) (Blind c) =
-       counterexample (withBlinds "meet associativity" [a, b, c])
-        ((a /\ (b /\ c)) === ((a /\ b) /\ c))
-  .&&. counterexample (withBlinds "meet commutativity" [a, b])
-        ((a /\ b) === (b /\ a))
-  .&&. counterexample (withBlinds "meet idempotent" [a])
-        ((a /\ a) === a)
-  .&&. counterexample (withBlinds "meet identity" [a])
-        ((top /\ a) === a)
-  .&&. counterexample (withBlinds "meet order" [a, b])
-        (Meet (a /\ b) `leq` Meet a)
-
--- |
--- Verfifies bounded join semilattice laws.
-prop_BoundedJoinSemiLattice :: (BoundedJoinSemiLattice a, Eq a, Show a)
-                            => Blind a -> Blind a -> Blind a -> Property
-prop_BoundedJoinSemiLattice (Blind a) (Blind b) (Blind c) =
-       counterexample (withBlinds "join associativity" [a, b, c])
-        ((a \/ (b \/ c)) === ((a \/ b) \/ c))
-  .&&. counterexample (withBlinds "join commutativity" [a, b])
-        ((a \/ b) === (b \/ a))
-  .&&. counterexample (withBlinds "join idempotent" [a])
-        ((a \/ a) === a)
-  .&&. counterexample (withBlinds "join identity" [a])
-        ((bottom \/ a) === a)
-  .&&. counterexample (withBlinds "join order" [a, b])
-        (Join a `leq` Join (a \/ b))
-
--- |
--- Distributivity laws for a lattice.
-prop_DistributiveLattice :: (Lattice a, Eq a, Show a)
-                         => a -> a -> a -> Property
-prop_DistributiveLattice a b c =
-       counterexample "a ∧ (b ∨ c) ≠ a ∧ b ∨ a ∧ c"
-        ((a /\ (b \/ c)) === ((a /\ b) \/ (a /\ c)))
-  .&&.
-       counterexample "a ∨ (b ∧ c) ≠ (a ∨ b) ∧ (a ∨ c)"
-        ((a \/ (b /\ c)) === ((a \/ b) /\ (a \/ c)))
-
--- |
--- Verifies the Heyting algebra law for @==>@:
--- for all @a@: @_ /\ a@ is left adjoint to  @a ==>@
--- and some other properties that are a consequence of that.
-prop_implies :: (HeytingAlgebra a, Eq a, Show a)
-             => Blind a -> Blind a -> Blind a -> Property
-prop_implies (Blind x) (Blind a) (Blind b) =
-  counterexample
-    (withBlinds "Failed: x ≤ (a ⇒ b) then x ∧ a ≤ b" [x, a, b])
-    (Meet x `leq` Meet (a ==> b) QC.==> (Meet (x /\ a) `leq` Meet b))
-  .&&.
-  counterexample
-    (withBlinds "Failed: x ∧ a ≤ b then x ≤ (a ⇒ b)" [x, a, b])
-    (Meet (x /\ a) `leq` Meet b QC.==> (Meet x `leq` Meet (a ==> b)))
-  .&&.
-  counterexample
-    (withBlinds "Failed: a ≤ b ⇏ not a" [a, b])
-    (Meet a `leq` Meet b QC.==> (Meet (not b) `leq` Meet (not a)))
-  .&&.
-  counterexample
-    (withBlinds "Failed: not (a ∧ b) ≠ not a ∨ not b" [a, b])
-    (not (a /\  b) === not a \/ not b)
-  .&&.
-  counterexample
-    (withBlinds "Failed: not (a ∨ b) ≠ not a ∧ not b" [a, b])
-    (not (a \/  b) === not a /\ not b)
-  .&&.
-  counterexample
-    (withBlinds "Failed: (a ⇒ b) ∧ a ≰ b" [a, b])
-    (Meet ((a ==> b) /\ a) `leq` Meet b)
-
-
--- |
--- Usefull for testing valid instances of @'HeytingAlgebra'@ type class. It
--- validates:
---
--- * bounded lattice laws
--- * @'prop_implies'@
-prop_HeytingAlgebra :: (HeytingAlgebra a, Eq a, Show a)
-                    => Blind a -> Blind a -> Blind a -> Property
-prop_HeytingAlgebra (Blind a) (Blind b) (Blind c) = 
-       prop_BoundedJoinSemiLattice (Blind a) (Blind b) (Blind c)
-  .&&. prop_BoundedMeetSemiLattice (Blind a) (Blind b) (Blind c)
-  .&&. prop_DistributiveLattice a b c
-  .&&. prop_implies (Blind a) (Blind b) (Blind c)
-#endif

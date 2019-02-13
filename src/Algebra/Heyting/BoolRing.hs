@@ -5,18 +5,17 @@ module Algebra.Heyting.BoolRing
   , (<+>)
   ) where
 
-import Prelude hiding (not)
+import           Prelude hiding (not)
 
-import Data.Monoid (Monoid (..))
-
+import           Data.Monoid (Monoid (..))
 #if __GLASGOW_HASKELL__ < 804
-import Data.Semigroup (Semigroup (..))
+import           Data.Semigroup (Semigroup (..))
 #endif
 
-import Algebra.Lattice (bottom, top, (/\), (\/))
-import Data.Semiring (Semiring (..), (<+>))
+import           Algebra.Lattice (bottom, top, (/\), (\/))
+import           Data.Semiring (Semiring (..), (<+>))
 
-import Algebra.Heyting
+import           Algebra.Heyting
 
 -- |
 -- Newtype wraper which captures Boolean ring structure, which holds for every

@@ -3,18 +3,17 @@ module Algebra.Heyting.Layered
   , layer
   ) where
 
-import Prelude
+import           Prelude
 
-import Algebra.Lattice
-  ( BoundedJoinSemiLattice (..)
-  , JoinSemiLattice (..)
-  , BoundedMeetSemiLattice (..)
-  , MeetSemiLattice (..)
-  , BoundedLattice
-  , Lattice
-  )
+import           Algebra.Lattice ( BoundedJoinSemiLattice (..)
+                                 , JoinSemiLattice (..)
+                                 , BoundedMeetSemiLattice (..)
+                                 , MeetSemiLattice (..)
+                                 , BoundedLattice
+                                 , Lattice
+                                 )
 
-import Algebra.Heyting (HeytingAlgebra (..))
+import           Algebra.Heyting (HeytingAlgebra (..))
 
 -- |
 -- Layer one Heyting algebra on top of the other.  Note: this is not
