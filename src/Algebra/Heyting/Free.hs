@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeFamilies #-}
 module Algebra.Heyting.Free
   ( FreeHeyting (..)
+  , atom
   ) where
 
 import           Prelude hiding (not)
@@ -29,7 +30,8 @@ import           Algebra.Heyting   (HeytingAlgebra (..))
 --
 -- The
 -- [graph](https://en.wikipedia.org/wiki/Heyting_algebra#/media/File:Rieger-Nishimura.svg)
--- of free Heyting algebra with one generator, i.e. @'FreeHeyting' ()@.
+-- of free Heyting algebra with one generator\/atom, i.e. @'FreeHeyting' ()@.
+--
 newtype FreeHeyting a = FreeHeyting
   { runFreeHeyting :: forall h . HeytingAlgebra h => (a -> h) -> h }
 
@@ -53,10 +55,17 @@ instance HeytingAlgebra (FreeHeyting a) where
   FreeHeyting f ==> FreeHeyting g = FreeHeyting (\inj -> f inj ==> g inj)
   not (FreeHeyting f)             = FreeHeyting (\inj -> not (f inj))
 
+-- |
+-- Construct an atom of the @'FreeHeyting'@ lattice (in the laguage of free
+-- algebra, it is called a generator, e.g. @atom = returnFree@).
+--
+atom :: a -> FreeHeyting a
+atom = \a -> FreeHeyting $ \inj -> inj a
+
 type instance AlgebraType0 FreeHeyting a = ()
 type instance AlgebraType  FreeHeyting a = HeytingAlgebra a
 instance FreeAlgebra FreeHeyting where
-  returnFree a = FreeHeyting (\inj -> inj a)
+  returnFree = atom
   foldMapFree f (FreeHeyting inj) = inj f
 
   codom  = proof
