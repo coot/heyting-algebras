@@ -5,12 +5,11 @@ script:
 - sudo pkill nix-daemon || true
 - cachix use free-algebras
 - nix-build -A heyting-algebras --argstr compiler $COMPILER
-- nix-build -A heyting-algebras --arg export-properties false
 - cachix push free-algebras ./result
 matrix:
   include:
-  - name: ghc862
-    env: COMPILER="ghc862"
+  - name: ghc863
+    env: COMPILER="ghc863"
   - name: ghc843
     env: COMPILER="ghc844"
   - name: ghc822
