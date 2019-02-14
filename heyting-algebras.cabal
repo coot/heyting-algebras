@@ -22,6 +22,7 @@ library
                        Algebra.Heyting.Free
                        Algebra.Heyting.Layered
                        Algebra.Heyting.BoolRing
+                       Algebra.Heyting.CounterExample
                        Algebra.Heyting.Properties
                        Algebra.Boolean
                        Algebra.Boolean.Free

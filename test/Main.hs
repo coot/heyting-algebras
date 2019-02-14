@@ -22,6 +22,7 @@ import qualified Data.Map as M
 import           Algebra.Boolean
 import           Algebra.Boolean.Properties
 import           Algebra.Heyting
+import           Algebra.Heyting.CounterExample
 import           Algebra.Heyting.Properties
 import           Algebra.Heyting.Layered
 
@@ -32,9 +33,10 @@ main :: IO ()
 main = defaultMain tests
 
 counterExampleProperty
-  :: CounterExample
+  :: Show e
+  => CounterExample e
   -> Property
-counterExampleProperty = maybe (property True) (flip counterexample False) . fromCounterExample
+counterExampleProperty = maybe (property True) (flip counterexample False) . fromCounterExample'
 
 tests :: TestTree
 tests =
@@ -47,9 +49,9 @@ tests =
         , testProperty "(Set S5)"               $ (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra @(Arb (S.Set S5))
         ]
     , testGroup "Non Boolean algebras"
-        [ testProperty "Not a BooleanAlgebra (Lifted Bool)"  $ expectFailure $ counterExampleProperty . prop_not @(Arb (Lifted Bool))
-        , testProperty "Not a BooleanAlgebra (Dropped Bool)" $ expectFailure $ counterExampleProperty . prop_not @(Arb (Dropped Bool))
-        , testProperty "Not a BooleanAlgebra Levitated (Ordered Int)" $ expectFailure $ counterExampleProperty . prop_not @(Arb (Levitated (Arb (Ordered Int))))
+        [ testProperty "Not a BooleanAlgebra (Lifted Bool)"  $ expectFailure $ counterExampleProperty . prop_not @(Arb (Lifted Bool)) @String
+        , testProperty "Not a BooleanAlgebra (Dropped Bool)" $ expectFailure $ counterExampleProperty . prop_not @(Arb (Dropped Bool)) @String
+        , testProperty "Not a BooleanAlgebra Levitated (Ordered Int)" $ expectFailure $ counterExampleProperty . prop_not @(Arb (Levitated (Arb (Ordered Int)))) @String
         ]
     , testGroup "Heyting algebras"
         [ testProperty "Lifted Bool"            $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (Lifted Bool))
