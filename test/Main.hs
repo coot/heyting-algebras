@@ -66,6 +66,7 @@ tests =
         , testProperty "Lifted (Dropped Bool)"  $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Composed Lifted Dropped Bool)
         , testProperty "Lifted (Lifted Bool)"   $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Composed Lifted Lifted Bool)
         , testProperty "Dropped (Dropped Bool)" $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Composed Dropped Dropped Bool)
+        , testProperty "CounterExample"         $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Composed Lifted Op (S.Set S5))
         ]
     ]
 
@@ -214,3 +215,9 @@ instance Arbitrary a => Arbitrary (Composed Dropped Dropped a) where
   shrink (Composed (Drop (Drop a))) =
        [ Composed Top, Composed (Drop Top) ]
     ++ [ Composed (Drop (Drop a')) | a' <- shrink a ]
+
+instance Arbitrary a => Arbitrary (Composed Lifted Op a) where
+  arbitrary = frequency
+    [ (9, Composed . Lift . Op <$> arbitrary)
+    , (1, return (Composed Bottom))
+    ]
