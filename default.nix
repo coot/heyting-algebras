@@ -1,6 +1,6 @@
-{ compiler ? "ghc844"
-, haddock ? true
-, test ? true
+{ compiler   ? "ghc844"
+, haddock    ? true
+, test       ? true
 , benchmarks ? false
 }:
 with builtins;
@@ -19,11 +19,13 @@ let
   doBench = if benchmarks
     then lib.doBenchmark
     else nixpkgs.lib.id;
+  doConfigure = drv:
+    lib.appendConfigureFlag drv "--ghc-option=-Werror";
 
-  heyting-algebras = doHaddock(doTest(doBench(
-    lib.overrideCabal
+  heyting-algebras = doConfigure(doHaddock(doTest(doBench(
+    (lib.overrideCabal
       (callCabal2nix "heyting-algebras" (nixpkgs.lib.sourceFilesBySuffices ./. [ ".hs" "LICENSE" "ChangeLog.md" "heyting-algebras.cabal"]) {})
       (drv: { enableSeparateDocOutput = false; })
-    )));
+    )))));
 
 in { inherit heyting-algebras; }
