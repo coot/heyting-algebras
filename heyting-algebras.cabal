@@ -1,5 +1,5 @@
 name:                heyting-algebras
-version:             0.0.1.2
+version:             0.0.2.0
 synopsis:            Heyting and Boolean algebras
 description:
   This package provides Heyting and Boolean operations together
