@@ -32,8 +32,9 @@ fmapCounterExample = fmap . fmap . Set.map
 counterExample :: e -> CounterExample e
 counterExample e = Lifted.Lift (Op (Set.singleton e))
 
--- | A lattice homorphism from @'Bool'@ to @'CounterExample'@, which lifts
--- @'False'@ to an atom of @'CounterExample'@ (uniquelly determined by @e@) and which preserves the top element.
+-- | A lattice homomorphism from @'Bool'@ to @'CounterExample'@, which lifts
+-- @'False'@ to an atom of @'CounterExample'@ (uniquely determined by @e@) and
+-- which preserves the top element.
 --
 fromBool :: Ord e => e -> Bool -> CounterExample e
 fromBool e False = counterExample e
@@ -48,7 +49,7 @@ toBool (Lifted.Lift (Op s)) | Set.null s
 toBool _                    = False
 
 -- | Note that this map is not a lattice homomorphism (it does not preserve
--- meet nor join).  It is also not a posset map in general.  Nevertheless, it preserves
+-- meet nor join).  It is also not a poset map in general.  Nevertheless, it preserves
 -- @top@ and @bottom@.
 --
 foldMapCounterExample
@@ -86,14 +87,14 @@ fromCounterExample' ce = case fromCounterExample ce of
   Levitated.Bottom     -> Just ""
 
 -- | Add a counter example.  This is simply lifts the bottom to an atom given
--- by @e@, otherwise it preseves the @'CounterExample' e@.
+-- by @e@, otherwise it preserves the @'CounterExample' e@.
 --
 -- Note that take join of @\e es = counterExample e \\/ es@ will return @top@ if
 -- @e@ if e is not in the set @es@; thus this map is not defined with using @\\/@.
 --
 annotate :: Ord e => e -> CounterExample e -> CounterExample e
 annotate e Lifted.Bottom = counterExample e
-annotate _ es     = es
+annotate _ es            = es
 
 (===) :: (Ord e, Eq a) => a -> a -> CounterExample e
 a === b = if a == b then Lifted.Lift (Op Set.empty) else Lifted.Bottom

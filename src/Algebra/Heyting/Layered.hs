@@ -17,7 +17,7 @@ import           Algebra.Heyting (HeytingAlgebra (..))
 
 -- |
 -- Layer one Heyting algebra on top of the other.  Note: this is not
--- a categorial sum.
+-- a categorical sum.
 data Layered a b
   = Lower a
   | Upper b

@@ -51,7 +51,7 @@ import           Algebra.PartialOrd         (leq)
 -- prop> x ∧ a ≤ b ⇔ x ≤ (a ⇒ b)
 --
 -- We also require that a Heyting algebra is a distributive lattice, which
--- means any of the two equialent conditions holds:
+-- means any of the two equivalent conditions holds:
 --
 -- prop> a ∧ (b ∨ c) = a ∧ b ∨ a ∧ c
 -- prop> a ∨ (b ∧ c) = (a ∨ b) ∧ (a ∨ c)
@@ -189,7 +189,7 @@ instance (Ord a, Bounded a) => HeytingAlgebra (Ordered a) where
 --
 
 -- |
--- Power set: the cannoical example of a Boolean algebra
+-- Power set: the canonical example of a Boolean algebra
 instance (Ord a, Finite a) => HeytingAlgebra (Set a) where
   not a = Set.fromList universe `Set.difference` a
 
