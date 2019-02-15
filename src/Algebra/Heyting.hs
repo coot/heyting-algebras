@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+
 module Algebra.Heyting
   ( -- * Heyting algebras
     HeytingAlgebra (..)
@@ -11,6 +12,7 @@ module Algebra.Heyting
   , BooleanAlgebra
   )
   where
+
 
 import           Prelude hiding (not)
 import qualified Prelude
