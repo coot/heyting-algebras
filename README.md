@@ -31,7 +31,7 @@ a -> a` (which we might also write as ⇒ in documentation); since every Boolean
 algebra is a Heyting algebra via `a ==> b = not a \/ b` (using the lattice
 notation for `or`).  It is very handy in expression conditional logic.
 
-Some basic examples of Heyting algebras:
+Some examples of Heyting algebras:
 * `Bool` is a Boolean algebra
 * `(Ord a, Bounded a) => a`; the implication is defined as: if `a ≤ b` then `a
   ⇒ b = maxBound`; otherwise `a ⇒ b = b`; e.g. integers with both `±∞` (it can
@@ -39,5 +39,12 @@ Some basic examples of Heyting algebras:
 * The power set is a Boolean algebra, in Haskell it can be represented by `Set
   a` (one might need to require `a` to be finite though, otherwise `not (not
   empty)` might be `undefined` rather than `empty`).
+* ```haskell
+    type CounterExample a = Lifted (Op (Set a))
+  ```
+  is a Heyting algebra; it is useful for gathering counter examples in
+  a similar way that `Property` from `QuickCheck` library does (put pure).
+  This library provides some useful functions for this type, see the
+  `Algebra.Heyting.Properties` and tests for example usage.
 * More generally every type `(Ord k, Finite k, HeytingAlgebra v) => Map k a` is
   a Heyting algebra (though in general not a Boolean one).
