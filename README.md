@@ -7,13 +7,14 @@ which are in the Haskell eco-system.  It is build on top of
 [lattices](https://hackage.haskell.org/package/lattices) and
 [free-algebras](https://hackage.haskell.org/package/free-algebras) (to provide
 combinators for free Heyting algebras).  The package also defines a type class
-for Boolean algebras and comes with a handful of instances.
+for Boolean algebras and comes with many useful instances.
 
 A note about notation: this package is based on
 [lattices](https://hackage.haskell.org/package/lattices), and both are using
 notation and names common in lattice theory and logic.  Where `&&` becomes `∧`
-and is called `meet` and `||` is denoted by `∨` and is usually called as
-`join`.  The `lattice` package provides `\/` and `/\` operators.
+and is called `meet` and `||` is denoted by `∨` and is usually called
+`join`.  The `lattice` package provides `\/` and `/\` operators as well as type
+classes for various flavors of posets and lattices.
 
 A very good introduction to Heyting algebras can be found at
 [ncatlab](https://ncatlab.org/nlab/show/Heyting%2Balgebra).  Heyting algebras
@@ -23,22 +24,23 @@ axiom of excluded middle.  From categorical point of view, Heyting algebras are
 posets (categories with at most one arrow between any objects), which are also
 Cartesian closed (and finitely (co-)complete).  Note that this makes any
 Heyting algebra a simply typed lambda calculus; hence one more incentive to
-learn how to use them.  For example currying holds in Heyting algebras: `a =>
-(b ⇒ c)` is equal to `(a ∧ b) ⇒ c`
+learn about them.  For example currying holds in every Heyting algebra:
+`a => (b ⇒ c)` is equal to `(a ∧ b) ⇒ c`
 
 The most important operation is implication `(==>) :: HeytingAlgebra a => a ->
-a -> a` (which we might also write as ⇒ in documentation); since every Boolean
+a -> a` (which we might also write as ⇒ in documentation).  Every Boolean
 algebra is a Heyting algebra via `a ==> b = not a \/ b` (using the lattice
 notation for `or`).  It is very handy in expression conditional logic.
 
 Some examples of Heyting algebras:
 * `Bool` is a Boolean algebra
 * `(Ord a, Bounded a) => a`; the implication is defined as: if `a ≤ b` then `a
-  ⇒ b = maxBound`; otherwise `a ⇒ b = b`; e.g. integers with both `±∞` (it can
-  be represented by `Levitated Int`.  This type is not a Boolean algebra.
+  ⇒ b = maxBound`, otherwise `a ⇒ b = b`; e.g. integers with both `±∞` (it can
+  be represented by `Levitated Int`.  Note that it is not a Boolean algebra.
 * The power set is a Boolean algebra, in Haskell it can be represented by `Set
   a` (one might need to require `a` to be finite though, otherwise `not (not
-  empty)` might be `undefined` rather than `empty`).
+  empty)` might be `undefined` rather than `empty`).  It is a well known fact
+  that every Boolean algebra is isomorphic to a power set.
 * ```haskell
     type CounterExample a = Lifted (Op (Set a))
   ```
