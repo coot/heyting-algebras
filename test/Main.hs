@@ -1,6 +1,13 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+
 module Main where
+
+import           Data.Universe.Class (Universe (..), Finite)
+import           Data.Set (Set)
+import qualified Data.Set as Set
+import           Data.Map (Map)
+import qualified Data.Map as Map
 
 import           Algebra.Lattice ( JoinSemiLattice
                                  , BoundedJoinSemiLattice
@@ -15,9 +22,6 @@ import           Algebra.Lattice.Levitated (Levitated)
 import qualified Algebra.Lattice.Levitated as L
 import           Algebra.Lattice.Op (Op (..))
 import           Algebra.Lattice.Ordered (Ordered (..))
-import           Data.Universe.Class (Universe (..), Finite)
-import qualified Data.Set as S
-import qualified Data.Map as M
 
 import           Algebra.Boolean
 import           Algebra.Boolean.Properties
@@ -38,39 +42,167 @@ counterExampleProperty
   -> Property
 counterExampleProperty = maybe (property True) (flip counterexample False) . fromCounterExample'
 
+-- 
+-- List of tast cases
+--
+
 tests :: TestTree
 tests =
   testGroup "heyting-algebras tests"
     [ testGroup "Boolean algebras"
-        [ testProperty "Bool"                   $ (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra @Bool
-        , testProperty "(Bool, Bool)"           $ (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra @(Bool, Bool)
-        , testProperty "Boolean (Lifted Bool)"  $ (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra @(Arb (Boolean (Arb (Lifted Bool))))
-        , testProperty "Boolean (Dropped Bool)" $ (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra @(Arb (Boolean (Arb (Dropped Bool))))
-        , testProperty "(Set S5)"               $ (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra @(Arb (S.Set S5))
+        [ testProperty "Bool"                                         prop_boolean_Bool
+        , testProperty "(Bool, Bool)"                                 prop_boolean_BoolBool
+        , testProperty "Boolean (Lifted Bool)"                        prop_boolean_LiftedBool
+        , testProperty "Boolean (Dropped Bool)"                       prop_boolean_DroppedBool
+        , testProperty "(Set S5)"                                     prop_boolean_Set
         ]
     , testGroup "Non Boolean algebras"
-        [ testProperty "Not a BooleanAlgebra (Lifted Bool)"  $ expectFailure $ counterExampleProperty . prop_not @(Arb (Lifted Bool)) @String
-        , testProperty "Not a BooleanAlgebra (Dropped Bool)" $ expectFailure $ counterExampleProperty . prop_not @(Arb (Dropped Bool)) @String
-        , testProperty "Not a BooleanAlgebra Levitated (Ordered Int)" $ expectFailure $ counterExampleProperty . prop_not @(Arb (Levitated (Arb (Ordered Int)))) @String
+        [ testProperty "Not a BooleanAlgebra (Lifted Bool)"           prop_non_boolean_LiftedBool
+        , testProperty "Not a BooleanAlgebra (Dropped Bool)"          prop_non_boolean_DroppedBool
+        , testProperty "Not a BooleanAlgebra Levitated (Ordered Int)" prop_non_boolean_LevitatedOrderedInt
         ]
     , testGroup "Heyting algebras"
-        [ testProperty "Lifted Bool"            $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (Lifted Bool))
-        , testProperty "Dropped Bool"           $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (Dropped Bool))
-        , testProperty "Layered Bool Bool"      $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (Layered Bool Bool))
-        , testProperty "Levitated Bool"         $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (Levitated Bool))
-        , testProperty "Sum (Lifted Bool) (Dropped Bool)"
-                                                $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (Layered (Arb (Lifted Bool)) (Arb (Dropped Bool))))
-        , testProperty "Levitated (Ordered Int)" $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (Levitated (Arb (Ordered Int))))
-        , testProperty "Map S5 Bool"            $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Arb (M.Map S5 Bool))
-        , testProperty "Dropped (Lifted Bool)"  $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Composed Dropped Lifted Bool)
-        , testProperty "Lifted (Dropped Bool)"  $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Composed Lifted Dropped Bool)
-        , testProperty "Lifted (Lifted Bool)"   $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Composed Lifted Lifted Bool)
-        , testProperty "Dropped (Dropped Bool)" $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Composed Dropped Dropped Bool)
-        , testProperty "CounterExample"         $ (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra @(Composed Lifted Op (S.Set S5))
+        [ testProperty "Lifted Bool"                                  prop_heyting_LiftedBool
+        , testProperty "Dropped Bool"                                 prop_heyting_DroppedBool
+        , testProperty "Layered Bool Bool"                            prop_heyting_LayeredBoolBool
+        , testProperty "Levitated Bool"                               prop_heyting_LevitatedBool
+        , testProperty "Sum (Lifted Bool) (Dropped Bool)"             prop_heyting_LayeredLiftedDropped
+        , testProperty "Levitated (Ordered Int)"                      prop_heyting_LevitatedOrderedInt
+        , testProperty "Map S5 Bool"                                  prop_heyting_MapS5Bool
+        , testProperty "Dropped (Lifted Bool)"                        prop_heyting_DroppedLiftedBool
+        , testProperty "Lifted (Dropped Bool)"                        prop_heyting_LiftedDroppedBool
+        , testProperty "Lifted (Lifted Bool)"                         prop_heyting_LiftedLiftedBool
+        , testProperty "Dropped (Dropped Bool)"                       prop_heyting_DroppedDroppedBool
+        , testProperty "CounterExample"                               prop_heyting_CounterExample
         ]
     ]
 
--- | Arbitrary wrapper
+--
+-- Boolean algebra tests
+--
+
+type BooleanProp a = a -> a -> a -> Property
+
+prop_boolean_Bool
+  :: BooleanProp Bool
+prop_boolean_Bool =
+  (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra
+
+prop_boolean_BoolBool
+  :: BooleanProp (Bool, Bool)
+prop_boolean_BoolBool =
+  (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra
+
+prop_boolean_LiftedBool
+  :: BooleanProp (Arb (Boolean (Arb (Lifted Bool))))
+prop_boolean_LiftedBool =
+  (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra
+
+prop_boolean_DroppedBool
+  :: BooleanProp (Arb (Boolean (Arb (Dropped Bool))))
+prop_boolean_DroppedBool =
+  (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra
+
+prop_boolean_Set
+  :: BooleanProp (Arb (Set S5))
+prop_boolean_Set =
+  (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra
+
+--
+-- Non Boolean algebra tests
+--
+
+type NonBooleanProp a = a -> Property
+
+prop_non_boolean_LiftedBool
+  :: NonBooleanProp (Arb (Lifted Bool))
+prop_non_boolean_LiftedBool =
+    expectFailure
+  . counterExampleProperty @String
+  . prop_not
+
+prop_non_boolean_DroppedBool
+  :: NonBooleanProp (Arb (Dropped Bool))
+prop_non_boolean_DroppedBool =
+    expectFailure
+  . counterExampleProperty @String
+  . prop_not
+
+prop_non_boolean_LevitatedOrderedInt
+  :: NonBooleanProp (Arb (Levitated (Arb (Ordered Int))))
+prop_non_boolean_LevitatedOrderedInt =
+    expectFailure
+  . counterExampleProperty @String
+  . prop_not
+
+--
+-- Heyting algebra tests
+--
+
+type HeytingProp a = a -> a -> a -> Property
+
+prop_heyting_LiftedBool
+  :: HeytingProp (Arb (Lifted Bool))
+prop_heyting_LiftedBool =
+  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
+
+prop_heyting_DroppedBool
+  :: HeytingProp (Arb (Dropped Bool))
+prop_heyting_DroppedBool =
+  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
+
+prop_heyting_LayeredBoolBool
+  :: HeytingProp (Arb (Layered Bool Bool))
+prop_heyting_LayeredBoolBool =
+  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
+
+prop_heyting_LevitatedBool
+  :: HeytingProp (Arb (Levitated Bool))
+prop_heyting_LevitatedBool =
+  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
+
+prop_heyting_LayeredLiftedDropped
+  :: HeytingProp (Arb (Layered (Arb (Lifted Bool)) (Arb (Dropped Bool))))
+prop_heyting_LayeredLiftedDropped =
+  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
+
+prop_heyting_LevitatedOrderedInt
+  :: HeytingProp (Arb (Levitated (Arb (Ordered Int))))
+prop_heyting_LevitatedOrderedInt =
+  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
+
+prop_heyting_MapS5Bool
+  :: HeytingProp (Arb (Map S5 Bool))
+prop_heyting_MapS5Bool =
+  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
+
+prop_heyting_DroppedLiftedBool
+  :: HeytingProp (Composed Dropped Lifted Bool)
+prop_heyting_DroppedLiftedBool =
+  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
+
+prop_heyting_LiftedDroppedBool
+  :: HeytingProp (Composed Lifted Dropped Bool)
+prop_heyting_LiftedDroppedBool =
+  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
+
+prop_heyting_LiftedLiftedBool
+  :: HeytingProp (Composed Lifted Lifted Bool)
+prop_heyting_LiftedLiftedBool =
+  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
+
+prop_heyting_DroppedDroppedBool
+  :: HeytingProp (Composed Dropped Dropped Bool)
+prop_heyting_DroppedDroppedBool =
+  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
+
+prop_heyting_CounterExample
+  :: HeytingProp (Composed Lifted Op (Set S5))
+prop_heyting_CounterExample =
+  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
+
+-- | Arbitrary wrapper for varous lattices.
+--
 newtype Arb a = Arb a
   deriving ( JoinSemiLattice
            , BoundedJoinSemiLattice
@@ -87,11 +219,11 @@ newtype Arb a = Arb a
 instance Show a => Show (Arb a) where
   show (Arb a) = show a
 
-instance (Finite k, Arbitrary k, Arbitrary v, Ord k) => Arbitrary (Arb (M.Map k v)) where
+instance (Finite k, Arbitrary k, Arbitrary v, Ord k) => Arbitrary (Arb (Map k v)) where
   arbitrary = frequency 
-    [ (1, Arb . M.fromList <$> arbitrary)
-    , (4, Arb . M.fromList . zip universe <$> vectorOf (length (universe @k)) arbitrary)
-    , (6, return $ Arb M.empty)
+    [ (1, return $ Arb Map.empty)
+    , (1, Arb . Map.fromList . zip universe <$> vectorOf (length (universe @k)) arbitrary)
+    , (8, Arb . Map.fromList <$> arbitrary)
     ]
 
 instance Arbitrary a => Arbitrary (Arb (Lifted a)) where
@@ -140,9 +272,9 @@ instance Finite S5
 instance Arbitrary S5 where
   arbitrary = elements universe
 
-instance (Arbitrary a, Ord a) => Arbitrary (Arb (S.Set a)) where
-  arbitrary = Arb . S.fromList <$> arbitrary
-  shrink (Arb as) = [ Arb (S.fromList as') | as' <- shrink (S.toList as) ]
+instance (Arbitrary a, Ord a) => Arbitrary (Arb (Set a)) where
+  arbitrary       = Arb . Set.fromList <$> arbitrary
+  shrink (Arb as) = [ Arb (Set.fromList as') | as' <- shrink (Set.toList as) ]
 
 instance (Arbitrary a, Arbitrary b) => Arbitrary (Arb (Layered a b)) where
   arbitrary = oneof
@@ -152,8 +284,8 @@ instance (Arbitrary a, Arbitrary b) => Arbitrary (Arb (Layered a b)) where
   shrink (Arb (Lower a)) = Arb . Lower <$> shrink a
   shrink (Arb (Upper b)) = Arb . Upper <$> shrink b
 
--- Another arbitrary newtype wrapper; using tagged type let us avoid
--- overlapping instances.
+-- | Arbitrary newtype wrapper for compositions of heigher kinded types.
+--
 newtype Composed f g a = Composed (f (g a))
   deriving ( JoinSemiLattice
            , BoundedJoinSemiLattice
@@ -174,7 +306,7 @@ instance Arbitrary a => Arbitrary (Composed Dropped Lifted a) where
   arbitrary = frequency
     [ (1, return $ Composed Top)
     , (1, return $ Composed (Drop Bottom))
-    , (2, Composed . Drop . Lift  <$> arbitrary)
+    , (8, Composed . Drop . Lift  <$> arbitrary)
     ]
 
   shrink (Composed Top)             = []
@@ -187,14 +319,14 @@ instance Arbitrary a => Arbitrary (Composed Lifted Dropped a) where
   arbitrary = frequency
     [ (1, return $ Composed Bottom)
     , (1, return $ Composed (Lift Top))
-    , (2, Composed . Lift . Drop  <$> arbitrary)
+    , (8, Composed . Lift . Drop  <$> arbitrary)
     ]
 
 instance Arbitrary a => Arbitrary (Composed Lifted Lifted a) where
   arbitrary = frequency
     [ (1, return $ Composed Bottom)
     , (1, return $ Composed (Lift Bottom))
-    , (2, Composed . Lift . Lift  <$> arbitrary)
+    , (8, Composed . Lift . Lift  <$> arbitrary)
     ]
 
   shrink (Composed Bottom)          = []
@@ -207,7 +339,7 @@ instance Arbitrary a => Arbitrary (Composed Dropped Dropped a) where
   arbitrary = frequency
     [ (1, return $ Composed Top)
     , (1, return $ Composed (Drop Top))
-    , (2, Composed . Drop . Drop  <$> arbitrary)
+    , (8, Composed . Drop . Drop  <$> arbitrary)
     ]
 
   shrink (Composed Top)          = []
@@ -218,6 +350,6 @@ instance Arbitrary a => Arbitrary (Composed Dropped Dropped a) where
 
 instance Arbitrary a => Arbitrary (Composed Lifted Op a) where
   arbitrary = frequency
-    [ (9, Composed . Lift . Op <$> arbitrary)
-    , (1, return (Composed Bottom))
+    [ (1, return (Composed Bottom))
+    , (9, Composed . Lift . Op <$> arbitrary)
     ]
