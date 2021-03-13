@@ -15,14 +15,14 @@ import           Data.Algebra.Free ( AlgebraType0
                                    , bindFree
                                    )
 
-import           Algebra.Boolean   (BooleanAlgebra)
+import           Algebra.Boolean   (Boolean)
 import           Algebra.Heyting
 
 -- |
 -- Free Boolean algebra.  @'FreeAlgebra'@ instance provides all the usual
 -- combinators for a free algebra.
 newtype FreeBoolean a = FreeBoolean
-  { runFreeBoolean :: forall h . BooleanAlgebra h => (a -> h) -> h }
+  { runFreeBoolean :: forall h . Boolean h => (a -> h) -> h }
 
 instance BoundedJoinSemiLattice (FreeBoolean a) where
   bottom = FreeBoolean (\_ -> bottom)
@@ -37,10 +37,10 @@ instance Lattice (FreeBoolean a) where
 instance Heyting (FreeBoolean a) where
   FreeBoolean f ==> FreeBoolean g = FreeBoolean (\inj -> f inj ==> g inj)
 
-instance BooleanAlgebra (FreeBoolean a)
+instance Boolean (FreeBoolean a)
 
 type instance AlgebraType0 FreeBoolean a = ()
-type instance AlgebraType  FreeBoolean a = BooleanAlgebra a
+type instance AlgebraType  FreeBoolean a = Boolean a
 instance FreeAlgebra FreeBoolean where
   returnFree a = FreeBoolean (\inj -> inj a)
   foldMapFree f (FreeBoolean inj) = inj f

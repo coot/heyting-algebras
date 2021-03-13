@@ -34,7 +34,7 @@ data BooleanAlgebraLawViolation a
 -- Test that @a@ is satisfy both @'Algebra.Heyting.prop_HeytingAlgebra'@ and
 -- @'prop_not'@.
 prop_BooleanAlgebra
-  :: (BooleanAlgebra a, Ord a, Eq a, Show a)
+  :: (Boolean a, Ord a, Eq a, Show a)
   => a -> a -> a -> CounterExample (BooleanAlgebraLawViolation a)
 prop_BooleanAlgebra a b c =
      (fmapCounterExample BALVHeytingAlgebraLawViolation $ prop_HeytingAlgebra a b c)

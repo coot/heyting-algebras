@@ -62,7 +62,7 @@ instance (Eq a, Heyting a) => Heyting (Dropped a) where
   Top      ==> a        = a
   _        ==> Top      = Top
 
-instance BooleanAlgebra a => Heyting (Op a) where
+instance Boolean a => Heyting (Op a) where
   (Op a) ==> (Op b) = Op (neg a /\ b)
 
 instance (Eq a, Heyting a) => Heyting (Levitated a) where
@@ -117,12 +117,12 @@ prop_boolean_Bool =
   (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra
 
 prop_boolean_LiftedBool
-  :: BooleanProp (Arb (Boolean (Arb (Lifted Bool))))
+  :: BooleanProp (Arb (BooleanAlgebra (Arb (Lifted Bool))))
 prop_boolean_LiftedBool =
   (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra
 
 prop_boolean_DroppedBool
-  :: BooleanProp (Arb (Boolean (Arb (Dropped Bool))))
+  :: BooleanProp (Arb (BooleanAlgebra (Arb (Dropped Bool))))
 prop_boolean_DroppedBool =
   (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra
 
@@ -221,7 +221,7 @@ newtype Arb a = Arb a
   deriving ( BoundedJoinSemiLattice
            , BoundedMeetSemiLattice
            , Lattice
-           , BooleanAlgebra
+           , Boolean
            , Heyting
            , Eq
            , Ord
@@ -263,9 +263,9 @@ instance Arbitrary a => Arbitrary (Arb (Levitated a)) where
     : [ Arb (L.Levitate a') | a' <- shrink a ]
   shrink (Arb L.Top) = []
 
-instance (Arbitrary a, Heyting a, Eq a) => Arbitrary (Arb (Boolean a)) where
+instance (Arbitrary a, Heyting a, Eq a) => Arbitrary (Arb (BooleanAlgebra a)) where
   arbitrary = Arb . boolean <$> arbitrary
-  shrink (Arb a) = filter (/= Arb a) (Arb . boolean <$> shrink (runBoolean a))
+  shrink (Arb a) = filter (/= Arb a) (Arb . boolean <$> shrink (runBooleanAlgebra a))
 
  
 instance Arbitrary a => Arbitrary (Arb (Ordered a)) where
@@ -301,7 +301,7 @@ newtype Composed f g a = Composed (f (g a))
   deriving ( BoundedJoinSemiLattice
            , BoundedMeetSemiLattice
            , Lattice
-           , BooleanAlgebra
+           , Boolean
            , Heyting
            , Eq
            , Ord
