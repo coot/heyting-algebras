@@ -6,14 +6,11 @@ module Algebra.Heyting.Layered
 import           Prelude
 
 import           Algebra.Lattice ( BoundedJoinSemiLattice (..)
-                                 , JoinSemiLattice (..)
                                  , BoundedMeetSemiLattice (..)
-                                 , MeetSemiLattice (..)
-                                 , BoundedLattice
-                                 , Lattice
+                                 , Lattice (..)
                                  )
 
-import           Algebra.Heyting (HeytingAlgebra (..))
+import           Algebra.Heyting ( Heyting (..) )
 
 -- |
 -- Layer one Heyting algebra on top of the other.  Note: this is not
@@ -23,38 +20,29 @@ data Layered a b
   | Upper b
   deriving (Show, Eq, Ord)
 
-instance (JoinSemiLattice a, JoinSemiLattice b) => JoinSemiLattice (Layered a b) where
-  Lower _   \/ u@Upper{} = u
-  u@Upper{} \/ Lower _   = u
-  Lower l   \/ Lower l'  = Lower $ l \/ l'
-  Upper u   \/ Upper u'  = Upper $ u \/ u'
-
-instance (BoundedJoinSemiLattice a, JoinSemiLattice b) => BoundedJoinSemiLattice (Layered a b) where
-  bottom = Lower bottom
-
-instance (MeetSemiLattice a, MeetSemiLattice b) => MeetSemiLattice (Layered a b) where
+instance ( Lattice a
+         , Lattice b
+         ) => Lattice (Layered a b) where
   l@Lower{} /\ Upper _   = l
   Upper _   /\ l@Lower{} = l
   Lower l   /\ Lower l'  = Lower $ l /\ l'
   Upper u   /\ Upper u'  = Upper $ u /\ u'
 
-instance (MeetSemiLattice a, BoundedMeetSemiLattice b) => BoundedMeetSemiLattice (Layered a b) where
+  Lower _   \/ u@Upper{} = u
+  u@Upper{} \/ Lower _   = u
+  Lower l   \/ Lower l'  = Lower $ l \/ l'
+  Upper u   \/ Upper u'  = Upper $ u \/ u'
+
+instance (BoundedJoinSemiLattice a, Lattice b) => BoundedJoinSemiLattice (Layered a b) where
+  bottom = Lower bottom
+
+instance (Lattice a, BoundedMeetSemiLattice b) => BoundedMeetSemiLattice (Layered a b) where
   top = Upper top
 
-instance ( Lattice a
-         , Lattice b
-         ) => Lattice (Layered a b)
-
-instance ( Lattice a
-         , Lattice b
-         , BoundedJoinSemiLattice a
-         , BoundedMeetSemiLattice b
-         ) => BoundedLattice (Layered a b)
-
-instance ( HeytingAlgebra a
-         , HeytingAlgebra b
+instance ( Heyting a
+         , Heyting b
          , Eq a
-         ) => HeytingAlgebra (Layered a b) where
+         ) => Heyting (Layered a b) where
   Lower _   ==> Upper _      = Upper top
   Upper _   ==> l@Lower{}    = l
   Upper u   ==> Upper u'     = Upper $ u ==> u'

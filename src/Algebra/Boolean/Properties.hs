@@ -14,11 +14,16 @@ import           Algebra.Heyting.Properties
 
 -- |
 -- Test that @'not'@ satisfies Boolean algebra axioms.
-prop_not :: (HeytingAlgebra a, Ord a, Eq a, Ord e) => a -> CounterExample e
-prop_not a =
-     (not (not a) === a)
-  /\ (not a /\ a === bottom)
-  /\ (not a \/ a === top)
+prop_neg :: (Heyting a, Ord a, Eq a, Ord e) => a -> CounterExample e
+prop_neg a =
+     (neg (neg a) === a)
+  /\ (neg a /\ a === bottom)
+  /\ (neg a \/ a === top)
+
+prop_not :: (Heyting a, Ord a, Eq a, Ord e) => a -> CounterExample e
+prop_not = prop_neg
+
+{-# DEPRECATED prop_not "Use prop_neg" #-}
 
 data BooleanAlgebraLawViolation a
   = BALVHeytingAlgebraLawViolation (HeytingAlgebraLawViolation a)

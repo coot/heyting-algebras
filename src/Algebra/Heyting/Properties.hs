@@ -4,10 +4,9 @@
 --
 module Algebra.Heyting.Properties where
 
-import           Prelude hiding (not)
+import           Prelude
 
 import           Data.List (intersperse)
-import           Data.Semigroup ((<>))
 
 import           Algebra.Lattice ( Lattice
                                  , BoundedJoinSemiLattice
@@ -125,13 +124,13 @@ instance Show a => Show (HeytingAlgebraLawViolation a) where
       withArgs "x ∧ a ≤ b then x ≤ (a ⇒ b)" [x, a, b]
 
   show (HAVNot a b) =
-    withArgs "a ≤ b ⇏ not a" [a, b]
+    withArgs "a ≤ b ⇏ neg a" [a, b]
 
   show (HAVNotAndMeet a b) =
-    withArgs "not (a ∧ b) ≠ not a ∨ not b" [a, b]
+    withArgs "neg (a ∧ b) ≠ neg a ∨ neg b" [a, b]
 
   show (HAVNotAndJoin a b) =
-    withArgs "not (a ∨ b) ≠ not a ∧ not b" [a, b]
+    withArgs "neg (a ∨ b) ≠ neg a ∧ neg b" [a, b]
 
   show (HAVImplicationAndOrd a b) =
     withArgs "(a ⇒ b) ∧ a ≰ b" [a, b]
@@ -144,7 +143,7 @@ instance Show a => Show (HeytingAlgebraLawViolation a) where
 -- Verifies the Heyting algebra law for @==>@:
 -- for all @a@: @_ /\ a@ is left adjoint to  @a ==>@
 -- and some other properties that are a consequence of that.
-prop_implies :: (HeytingAlgebra a, Ord a, Eq a, Show a)
+prop_implies :: (Heyting a, Ord a, Eq a, Show a)
              => a -> a -> a -> CounterExample (HeytingAlgebraLawViolation a)
 prop_implies x a b =
     fromBool
@@ -155,25 +154,25 @@ prop_implies x a b =
       (Meet (x /\ a) `leq` Meet b ==> (Meet x `leq` Meet (a ==> b)))
   /\ fromBool
       (HAVNot a b)
-      (Meet a `leq` Meet b ==> (Meet (not b) `leq` Meet (not a)))
+      (Meet a `leq` Meet b ==> (Meet (neg b) `leq` Meet (neg a)))
   /\ annotate
       (HAVNotAndMeet a b)
-      (not (a /\ b) === (not a \/ not b))
+      (neg (a /\ b) === (neg a \/ neg b))
   /\ annotate
       (HAVNotAndJoin a b)
-      (not (a \/ b) === (not a /\ not b))
+      (neg (a \/ b) === (neg a /\ neg b))
   /\ fromBool
       (HAVImplicationAndOrd a a)
       (Meet ((a ==> b) /\ a) `leq` Meet b)
 
 -- |
--- Useful for testing valid instances of @'HeytingAlgebra'@ type class. It
+-- Useful for testing valid instances of @'Heyting'@ type class. It
 -- validates:
 --
 -- * bounded lattice laws
 -- * @'prop_implies'@
 prop_HeytingAlgebra
-  :: (HeytingAlgebra a, Ord a, Eq a, Show a)
+  :: (Heyting a, Ord a, Eq a, Show a)
   => a -> a -> a -> CounterExample (HeytingAlgebraLawViolation a)
 prop_HeytingAlgebra a b c =
 

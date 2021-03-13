@@ -1,5 +1,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE PackageImports             #-}
+
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Main where
 
@@ -9,12 +12,12 @@ import qualified Data.Set as Set
 import           Data.Map (Map)
 import qualified Data.Map as Map
 
-import           Algebra.Lattice ( JoinSemiLattice
-                                 , BoundedJoinSemiLattice
-                                 , MeetSemiLattice
+import           Algebra.Lattice ( BoundedJoinSemiLattice
                                  , BoundedMeetSemiLattice
-                                 , Lattice
-                                 , BoundedLattice
+                                 , Lattice (..)
+                                 , Meet (..)
+                                 , bottom
+                                 , top
                                  )
 import           Algebra.Lattice.Dropped (Dropped (..))
 import           Algebra.Lattice.Lifted (Lifted (..))
@@ -29,9 +32,10 @@ import           Algebra.Heyting
 import           Algebra.Heyting.CounterExample
 import           Algebra.Heyting.Properties
 import           Algebra.Heyting.Layered
+import           Algebra.PartialOrd (leq)
 
 import           Test.Tasty
-import           Test.Tasty.QuickCheck hiding (Ordered)
+import           Test.Tasty.QuickCheck hiding (Ordered, (==>))
 
 main :: IO ()
 main = defaultMain tests
@@ -42,6 +46,33 @@ counterExampleProperty
   -> Property
 counterExampleProperty = maybe (property True) (flip counterexample False) . fromCounterExample'
 
+--
+-- Orphan instances
+-- issue: https://github.com/haskellari/lattices/pull/112
+--
+
+instance Heyting a => Heyting (Lifted a) where
+  (Lift a) ==> (Lift b) = Lift (a ==> b)
+  Bottom   ==> _        = Lift top
+  _        ==> Bottom   = Bottom
+
+instance (Eq a, Heyting a) => Heyting (Dropped a) where
+  (Drop a) ==> (Drop b) | Meet a `leq` Meet b = Top
+                        | otherwise           = Drop (a ==> b)
+  Top      ==> a        = a
+  _        ==> Top      = Top
+
+instance BooleanAlgebra a => Heyting (Op a) where
+  (Op a) ==> (Op b) = Op (neg a /\ b)
+
+instance (Eq a, Heyting a) => Heyting (Levitated a) where
+  (L.Levitate a) ==> (L.Levitate b) | Meet a `leq` Meet b = L.Top
+                                    | otherwise           = L.Levitate (a ==> b)
+  L.Top          ==> a              = a
+  _              ==> L.Top          = L.Top
+  L.Bottom       ==> _              = L.Top
+  _              ==> L.Bottom       = L.Bottom
+
 -- 
 -- List of tast cases
 --
@@ -51,7 +82,6 @@ tests =
   testGroup "heyting-algebras tests"
     [ testGroup "Boolean algebras"
         [ testProperty "Bool"                                         prop_boolean_Bool
-        , testProperty "(Bool, Bool)"                                 prop_boolean_BoolBool
         , testProperty "Boolean (Lifted Bool)"                        prop_boolean_LiftedBool
         , testProperty "Boolean (Dropped Bool)"                       prop_boolean_DroppedBool
         , testProperty "(Set S5)"                                     prop_boolean_Set
@@ -68,12 +98,10 @@ tests =
         , testProperty "Levitated Bool"                               prop_heyting_LevitatedBool
         , testProperty "Sum (Lifted Bool) (Dropped Bool)"             prop_heyting_LayeredLiftedDropped
         , testProperty "Levitated (Ordered Int)"                      prop_heyting_LevitatedOrderedInt
-        , testProperty "Map S5 Bool"                                  prop_heyting_MapS5Bool
         , testProperty "Dropped (Lifted Bool)"                        prop_heyting_DroppedLiftedBool
         , testProperty "Lifted (Dropped Bool)"                        prop_heyting_LiftedDroppedBool
         , testProperty "Lifted (Lifted Bool)"                         prop_heyting_LiftedLiftedBool
         , testProperty "Dropped (Dropped Bool)"                       prop_heyting_DroppedDroppedBool
-        , testProperty "CounterExample"                               prop_heyting_CounterExample
         ]
     ]
 
@@ -86,11 +114,6 @@ type BooleanProp a = a -> a -> a -> Property
 prop_boolean_Bool
   :: BooleanProp Bool
 prop_boolean_Bool =
-  (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra
-
-prop_boolean_BoolBool
-  :: BooleanProp (Bool, Bool)
-prop_boolean_BoolBool =
   (fmap . fmap) counterExampleProperty . prop_BooleanAlgebra
 
 prop_boolean_LiftedBool
@@ -119,21 +142,21 @@ prop_non_boolean_LiftedBool
 prop_non_boolean_LiftedBool =
     expectFailure
   . counterExampleProperty @String
-  . prop_not
+  . prop_neg
 
 prop_non_boolean_DroppedBool
   :: NonBooleanProp (Arb (Dropped Bool))
 prop_non_boolean_DroppedBool =
     expectFailure
   . counterExampleProperty @String
-  . prop_not
+  . prop_neg
 
 prop_non_boolean_LevitatedOrderedInt
   :: NonBooleanProp (Arb (Levitated (Arb (Ordered Int))))
 prop_non_boolean_LevitatedOrderedInt =
     expectFailure
   . counterExampleProperty @String
-  . prop_not
+  . prop_neg
 
 --
 -- Heyting algebra tests
@@ -171,11 +194,6 @@ prop_heyting_LevitatedOrderedInt
 prop_heyting_LevitatedOrderedInt =
   (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
 
-prop_heyting_MapS5Bool
-  :: HeytingProp (Arb (Map S5 Bool))
-prop_heyting_MapS5Bool =
-  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
-
 prop_heyting_DroppedLiftedBool
   :: HeytingProp (Composed Dropped Lifted Bool)
 prop_heyting_DroppedLiftedBool =
@@ -196,22 +214,15 @@ prop_heyting_DroppedDroppedBool
 prop_heyting_DroppedDroppedBool =
   (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
 
-prop_heyting_CounterExample
-  :: HeytingProp (Composed Lifted Op (Set S5))
-prop_heyting_CounterExample =
-  (fmap . fmap) counterExampleProperty . prop_HeytingAlgebra
 
 -- | Arbitrary wrapper for varous lattices.
 --
 newtype Arb a = Arb a
-  deriving ( JoinSemiLattice
-           , BoundedJoinSemiLattice
-           , MeetSemiLattice
+  deriving ( BoundedJoinSemiLattice
            , BoundedMeetSemiLattice
            , Lattice
-           , BoundedLattice
            , BooleanAlgebra
-           , HeytingAlgebra
+           , Heyting
            , Eq
            , Ord
            )
@@ -252,7 +263,7 @@ instance Arbitrary a => Arbitrary (Arb (Levitated a)) where
     : [ Arb (L.Levitate a') | a' <- shrink a ]
   shrink (Arb L.Top) = []
 
-instance (Arbitrary a, HeytingAlgebra a, Eq a) => Arbitrary (Arb (Boolean a)) where
+instance (Arbitrary a, Heyting a, Eq a) => Arbitrary (Arb (Boolean a)) where
   arbitrary = Arb . boolean <$> arbitrary
   shrink (Arb a) = filter (/= Arb a) (Arb . boolean <$> shrink (runBoolean a))
 
@@ -287,14 +298,11 @@ instance (Arbitrary a, Arbitrary b) => Arbitrary (Arb (Layered a b)) where
 -- | Arbitrary newtype wrapper for compositions of heigher kinded types.
 --
 newtype Composed f g a = Composed (f (g a))
-  deriving ( JoinSemiLattice
-           , BoundedJoinSemiLattice
-           , MeetSemiLattice
+  deriving ( BoundedJoinSemiLattice
            , BoundedMeetSemiLattice
            , Lattice
-           , BoundedLattice
            , BooleanAlgebra
-           , HeytingAlgebra
+           , Heyting
            , Eq
            , Ord
            )
