@@ -1,5 +1,10 @@
 # Revision history for heyting-algebra
 
+## 0.1.0.0
+
+* Swapped Boolean (now a type class) and BooleanAlgebra (now a data type)
+* Reexport Algebra.Heyting and Algebra.Heyting.Free modules from lattices
+
 ## 0.0.2.0
 
 * Added Algebra.Heyting.CounterExample
