@@ -8,7 +8,7 @@ module Algebra.Boolean
   , neg
     -- * Adjunction between Boolean and Heyting algebras
   , Boolean
-  , runBoolean
+  , runBooleanAlgebra
   , boolean
   ) where
 
@@ -29,29 +29,29 @@ import           Algebra.Lattice        ( Lattice
                                         , BoundedMeetSemiLattice
                                         )
 
-class Heyting a => BooleanAlgebra a
+class Heyting a => Boolean a
 
-instance BooleanAlgebra Bool
+instance Boolean Bool
 
-instance BooleanAlgebra All
+instance Boolean All
 
-instance BooleanAlgebra Any
+instance Boolean Any
 
-instance BooleanAlgebra ()
+instance Boolean ()
 
-instance BooleanAlgebra (Proxy a)
+instance Boolean (Proxy a)
 
-instance BooleanAlgebra a => BooleanAlgebra (Tagged t a)
+instance Boolean a => Boolean (Tagged t a)
 
-instance BooleanAlgebra b => BooleanAlgebra (a -> b)
+instance Boolean b => Boolean (a -> b)
 
 #if MIN_VERSION_base(4,8,0)
-instance BooleanAlgebra a => BooleanAlgebra (Identity a)
+instance Boolean a => Boolean (Identity a)
 #endif
 
-instance BooleanAlgebra a => BooleanAlgebra (Const a b)
+instance Boolean a => Boolean (Const a b)
 
-instance BooleanAlgebra a => BooleanAlgebra (Endo a)
+instance Boolean a => Boolean (Endo a)
 
 -- | Every Heyting algebra contains a Boolean algebra. @'toBoolean'@ maps onto
 -- it; moreover it is a monad (Heyting algebra is a category as every poset is)
@@ -63,8 +63,8 @@ toBoolean = neg . neg
 -- |
 -- @'Boolean'@ is the left adjoint functor from the category of Heyting algebras
 -- to the category of Boolean algebras; its right adjoint is the inclusion.
-newtype Boolean a = Boolean
-    { runBoolean :: a -- ^ extract value from @'Boolean'@
+newtype BooleanAlgebra a = BooleanAlgebra
+    { runBooleanAlgebra :: a -- ^ extract value from @'Boolean'@
     }
   deriving
     ( BoundedJoinSemiLattice
@@ -74,10 +74,10 @@ newtype Boolean a = Boolean
     , Eq, Ord, Read, Show, Bounded, Typeable, Data, Generic
     )
 
-instance Heyting a => BooleanAlgebra (Boolean a)
+instance Heyting a => Boolean (BooleanAlgebra a)
 
 -- |
 -- Smart constructro of the @'Boolean'@ type.
-boolean :: Heyting a => a -> Boolean a
-boolean = Boolean . toBoolean
+boolean :: Heyting a => a -> BooleanAlgebra a
+boolean = BooleanAlgebra . toBoolean
 
