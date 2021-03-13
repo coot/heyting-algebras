@@ -1,31 +1,42 @@
-{ compiler   ? "ghc844"
-, haddock    ? true
-, test       ? true
-, benchmarks ? false
+{ compiler ? "ghc8104"
 }:
-with builtins;
-let
-  nixpkgs = import ./nix/nixpkgs.nix { inherit compiler; };
-  lib = nixpkgs.haskell.lib;
-  callPackage = nixpkgs.haskell.packages.${compiler}.callPackage;
-  callCabal2nix = nixpkgs.haskell.packages.${compiler}.callCabal2nix;
+let compiler-nix-name = compiler;
 
-  doHaddock = if haddock
-    then lib.doHaddock
-    else lib.dontHaddock;
-  doTest = if test
-    then lib.doCheck
-    else lib.dontCheck;
-  doBench = if benchmarks
-    then lib.doBenchmark
-    else nixpkgs.lib.id;
-  doConfigure = drv:
-    lib.appendConfigureFlag drv "--ghc-option=-Werror";
+    sources = import ./nix/sources.nix {};
+    iohkNix = import sources.iohk-nix {};
+    haskellNix = import sources."haskell.nix" {};
+    nixpkgs = iohkNix.nixpkgs;
+    haskell-nix = haskellNix.pkgs.haskell-nix;
 
-  heyting-algebras = doConfigure(doHaddock(doTest(doBench(
-    (lib.overrideCabal
-      (callCabal2nix "heyting-algebras" (nixpkgs.lib.sourceFilesBySuffices ./. [ ".hs" "LICENSE" "ChangeLog.md" "heyting-algebras.cabal"]) {})
-      (drv: { enableSeparateDocOutput = false; })
-    )))));
+    # package set
+    pkgs = import nixpkgs
+              { config = haskellNix.config;
+                overlays = [ (_: _: { inherit heytingAlgebrasPackages; }) ];
+              };
+    lib = pkgs.lib;
 
-in { inherit heyting-algebras; }
+    # 'cleanGit' cleans a source directory based on the files known by git
+    src = haskell-nix.haskellLib.cleanGit {
+      name = "heyting-algebras";
+      src = ./.;
+    };
+
+    # unmodified packages
+    projectPackages = lib.attrNames
+      (haskell-nix.haskellLib.selectProjectPackages
+      (haskell-nix.cabalProject { inherit src compiler-nix-name; }));
+
+    # set GHC options
+    heytingAlgebrasPackages = haskell-nix.cabalProject {
+        inherit src compiler-nix-name;
+        modules =
+          [
+            { packages =
+                lib.genAttrs
+                  projectPackages
+                  (name: { configureFlags = [ "--ghc-option=-Werror" ]; });
+            }
+          ];
+      };
+in pkgs.heytingAlgebrasPackages
+

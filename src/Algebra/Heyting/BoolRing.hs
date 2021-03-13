@@ -5,9 +5,11 @@ module Algebra.Heyting.BoolRing
   , (<+>)
   ) where
 
-import           Prelude hiding (not)
+import           Prelude
 
+#if __GLASGOW_HASKELL__ < 810
 import           Data.Monoid (Monoid (..))
+#endif
 #if __GLASGOW_HASKELL__ < 804
 import           Data.Semigroup (Semigroup (..))
 #endif
@@ -31,11 +33,11 @@ import           Algebra.Heyting
 newtype BoolRing a = BoolRing { getBoolRing :: a }
 
 -- | Sum is [symmetric differnce](https://en.wikipedia.org/wiki/Symmetric_difference).
-instance HeytingAlgebra a => Semigroup (BoolRing a) where
-  (BoolRing a) <> (BoolRing b) = BoolRing $ (not a /\ b) \/ (a /\ not b)
+instance Heyting a => Semigroup (BoolRing a) where
+  (BoolRing a) <> (BoolRing b) = BoolRing $ (neg a /\ b) \/ (a /\ neg b)
 
 -- | In a Boolean ring @a + a = 0@, hence @negate = id@.
-instance HeytingAlgebra a => Monoid (BoolRing a) where
+instance Heyting a => Monoid (BoolRing a) where
   mempty = BoolRing bottom
 
 #if __GLASGOW_HASKELL__ <= 804
@@ -43,6 +45,6 @@ instance HeytingAlgebra a => Monoid (BoolRing a) where
 #endif
 
 -- |  Multiplication is given by @'/\'@
-instance HeytingAlgebra a => Semiring (BoolRing a) where
+instance Heyting a => Semiring (BoolRing a) where
   BoolRing a <.> BoolRing b = BoolRing (a \/ b)
   one = BoolRing top
