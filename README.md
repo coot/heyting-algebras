@@ -2,12 +2,10 @@
 [![Maintainer: coot](https://img.shields.io/badge/maintainer-coot-lightgrey.svg)](http://github.com/coot)
 [![Travis Build Status](https://travis-ci.org/coot/heyting-algebras.svg?branch=master)](https://travis-ci.org/coot/heyting-algebras)
 
-This package contains type classes and instances for many Heyting algebras
-which are in the Haskell eco-system.  It is build on top of
-[lattices](https://hackage.haskell.org/package/lattices) and
-[free-algebras](https://hackage.haskell.org/package/free-algebras) (to provide
-combinators for free Heyting algebras).  The package also defines a type class
-for Boolean algebras and comes with many useful instances.
+This package now extends
+[lattices](https://hackage.haskell.org/package/lattices) by providing more
+Heyting algebras.  The package also defines a type class for Boolean algebras
+and comes with many useful instances.
 
 A note about notation: this package is based on
 [lattices](https://hackage.haskell.org/package/lattices), and both are using
