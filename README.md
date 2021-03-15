@@ -1,6 +1,7 @@
 # Heyting Algebras
 [![Maintainer: coot](https://img.shields.io/badge/maintainer-coot-lightgrey.svg)](http://github.com/coot)
-[![Travis Build Status](https://travis-ci.org/coot/heyting-algebras.svg?branch=master)](https://travis-ci.org/coot/heyting-algebras)
+[![POSIX](https://github.com/coot/heyting-algebras/actions/workflows/posix.yml/badge.svg)](https://github.com/coot/heyting-algebras/actions/workflows/posix.yml)
+
 
 This package now extends
 [lattices](https://hackage.haskell.org/package/lattices) by providing more
