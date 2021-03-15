@@ -7,7 +7,7 @@ module Algebra.Heyting.BoolRing
 
 import           Prelude
 
-#if __GLASGOW_HASKELL__ < 810
+#if __GLASGOW_HASKELL__ < 808
 import           Data.Monoid (Monoid (..))
 #endif
 #if __GLASGOW_HASKELL__ < 804
