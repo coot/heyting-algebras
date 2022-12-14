@@ -27,7 +27,7 @@ library
                        Algebra.Boolean.Properties
   reexported-modules:  lattices:Algebra.Heyting
                     ,  lattices:Algebra.Heyting.Free
-  build-depends:       base            >= 4.9     && < 4.16
+  build-depends:       base            >= 4.9     && < 4.17
                      , containers      >= 0.4.2   && < 0.7
                      , free-algebras   >= 0.1.0.1 && < 0.1.1.0
                      , hashable        >= 1.2.6.1 && < 1.4
