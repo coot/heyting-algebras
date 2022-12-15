@@ -53,5 +53,4 @@ instance Applicative FreeBoolean where
   (<*>) = ap
 
 instance Monad FreeBoolean where
-  return = returnFree
   (>>=) = bindFree
